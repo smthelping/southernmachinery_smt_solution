@@ -1152,6 +1152,178 @@
     $('#llmBadge').textContent = ok ? `LLM 已配置（${LLM.get().model}）` : 'LLM 未配置';
   }
 
+  /* ============================ 认证门禁（Supabase） ============================ */
+  let authLocalOptOut = false;
+  let corpusLoaded = false;
+
+  function showAuthGate(show) { $('#authGate').classList.toggle('hidden', !show); }
+
+  function authErr(id, msg) {
+    const el = $('#' + id);
+    if (!el) return;
+    if (!msg) { el.classList.add('hidden'); el.textContent = ''; return; }
+    el.classList.remove('hidden');
+    el.textContent = msg;
+  }
+
+  function updateUserChip(st) {
+    const chip = $('#userChip'), out = $('#btnSignOut');
+    if (!chip) return;
+    if (st.stage === 'local') {
+      chip.className = 'badge';
+      chip.textContent = '本地模式（未接认证）';
+      chip.classList.remove('hidden');
+      out.classList.add('hidden');
+      return;
+    }
+    if (st.profile) {
+      chip.className = 'badge ok';
+      chip.textContent = (st.profile.display_name || st.profile.email) + (st.profile.role === 'admin' ? ' · ADMIN' : '');
+      chip.classList.remove('hidden');
+      out.classList.remove('hidden');
+    } else {
+      chip.classList.add('hidden');
+      out.classList.add('hidden');
+    }
+  }
+
+  function renderAuth(st) {
+    if (st.stage === 'local' || (authLocalOptOut && st.stage !== 'ready')) {
+      showAuthGate(false);
+      updateUserChip(st);
+      return;
+    }
+    showAuthGate(true);
+    $$('#authGate section[data-auth]').forEach(sec => {
+      sec.classList.toggle('hidden', sec.dataset.auth !== st.stage);
+    });
+    updateUserChip(st);
+
+    if (st.stage === 'error') authErr('authErrorMsg', st.error || '未知错误');
+    if (st.stage === 'mfa_enroll' && !$('#authQr').innerHTML) {
+      startEnroll().catch(err => authErr('authError3', err.message));
+    }
+    if (st.stage === 'ready') loadRemoteCorpus();
+  }
+
+  function startEnroll() {
+    return Auth.enrollTotp().then(e => {
+      $('#authQr').innerHTML = e.qr ? `<img alt="TOTP 二维码" src="${e.qr}">` : '';
+      $('#authSecret').textContent = e.secret || '';
+      $('#authEnrollVerify').dataset.factorId = e.factorId;
+      log('已生成 TOTP 绑定二维码，请用认证器 App 扫码。');
+    });
+  }
+
+  async function loadRemoteCorpus() {
+    if (corpusLoaded) return;
+    corpusLoaded = true;
+    log('正在按权限加载客户资料库…', 'busy');
+    try {
+      const r = await Auth.loadCorpus();
+      if (r.ok) {
+        const s = KB.loadRemote(r.docs);
+        refreshKb();
+        log(`客户资料库已加载：${s.remote} 篇（服务端 RLS 授权）`);
+      } else if (r.reason === 'no_access') {
+        log('未取得客户资料库权限：' + (r.hint || ''), 'err');
+      } else if (r.reason !== 'local') {
+        log('客户资料库加载失败：' + r.reason, 'err');
+      }
+    } catch (err) {
+      log('客户资料库加载异常：' + err.message, 'err');
+    }
+  }
+
+  function bindAuth() {
+    $('#authSignIn').addEventListener('click', async () => {
+      authErr('authError');
+      const email = $('#authEmail').value.trim();
+      const pwd = $('#authPassword').value;
+      if (!email || !pwd) { authErr('authError', '请输入邮箱与密码'); return; }
+      $('#authSignIn').disabled = true;
+      try {
+        await Auth.signIn(email, pwd);
+        $('#authPassword').value = '';
+        log('登录成功：' + email);
+      } catch (e) {
+        authErr('authError', e.message);
+      } finally { $('#authSignIn').disabled = false; }
+    });
+    $('#authPassword').addEventListener('keydown', e => { if (e.key === 'Enter') $('#authSignIn').click(); });
+
+    $('#authNewPwd').addEventListener('input', () => {
+      const v = $('#authNewPwd').value;
+      const issues = Auth.passwordIssues(v, Auth.get().profile);
+      const hint = $('#authPwdHint');
+      if (!v) { hint.textContent = ''; return; }
+      hint.textContent = issues.length ? '还需满足：' + issues.join('、') : '✅ 符合强度要求';
+      hint.style.color = issues.length ? '' : '#0b7a3d';
+    });
+    $('#authChangePwd').addEventListener('click', async () => {
+      authErr('authError2');
+      const p1 = $('#authNewPwd').value, p2 = $('#authNewPwd2').value;
+      if (p1 !== p2) { authErr('authError2', '两次输入的密码不一致'); return; }
+      const issues = Auth.passwordIssues(p1, Auth.get().profile);
+      if (issues.length) { authErr('authError2', '密码不满足要求：' + issues.join('、')); return; }
+      $('#authChangePwd').disabled = true;
+      try {
+        await Auth.changePassword(p1);
+        log('初始密码已修改（服务端已解除待改密标记）。');
+      } catch (e) {
+        authErr('authError2', e.message);
+      } finally { $('#authChangePwd').disabled = false; }
+    });
+
+    $('#authEnrollVerify').addEventListener('click', async () => {
+      authErr('authError3');
+      const factorId = $('#authEnrollVerify').dataset.factorId;
+      const code = $('#authTotp').value.trim();
+      if (!factorId) { authErr('authError3', '二维码尚未生成，请稍候或点击重试'); return; }
+      if (code.length !== 6) { authErr('authError3', '请输入 6 位验证码'); return; }
+      $('#authEnrollVerify').disabled = true;
+      try {
+        await Auth.verifyTotp(factorId, code);
+        log('双因素认证绑定完成。');
+      } catch (e) {
+        authErr('authError3', e.message);
+      } finally { $('#authEnrollVerify').disabled = false; }
+    });
+
+    $('#authVerify').addEventListener('click', async () => {
+      authErr('authError4');
+      const st = Auth.get();
+      const code = $('#authTotp2').value.trim();
+      if (code.length !== 6) { authErr('authError4', '请输入 6 位验证码'); return; }
+      $('#authVerify').disabled = true;
+      try {
+        await Auth.verifyTotp(st.factorId, code);
+        log('双因素验证通过。');
+      } catch (e) {
+        authErr('authError4', e.message);
+      } finally { $('#authVerify').disabled = false; }
+    });
+
+    $$('#authGate .auth-signout').forEach(b => b.addEventListener('click', async () => {
+      await Auth.signOut();
+      corpusLoaded = false;
+      log('已退出登录。');
+    }));
+
+    $('#authRetry').addEventListener('click', () => { Auth.init().catch(e => authErr('authErrorMsg', e.message)); });
+    $('#authLocalMode').addEventListener('click', () => {
+      authLocalOptOut = true;
+      showAuthGate(false);
+      updateUserChip({ stage: 'local' });
+      log('已切换为本地模式：不含客户资料库，功能仍可使用。');
+    });
+    $('#btnSignOut').addEventListener('click', async () => {
+      if (!confirm('退出登录后需要重新验证身份。是否继续？')) return;
+      await Auth.signOut();
+      location.reload();
+    });
+  }
+
   /* ============================ 初始化 ============================ */
   function renderAll() {
     if (state.rawInquiry) $('#inquiryText').value = state.rawInquiry;
@@ -1201,6 +1373,7 @@
     bindSolution();
     bindKb();
     bindSettings();
+    bindAuth();
 
     $('#stepNav').addEventListener('click', e => {
       const b = e.target.closest('.step');
@@ -1230,6 +1403,19 @@
     const s = KB.stats();
     log(`就绪：知识库 ${s.total} 篇历史方案（${(s.chars / 10000).toFixed(1)} 万字），产品库 ${SM_PRODUCTS.products.length} 个机型。`);
     if (!LLM.ready()) log('提示：未配置 LLM。可在「设置」中填写任意 OpenAI 兼容接口，以获得 AI 解析、背调与文案撰写能力。');
+
+    /* 认证门禁：配置了 Supabase 才启用；否则保持本地模式（行为与之前完全一致） */
+    if (Auth.configured()) {
+      showAuthGate(true);
+      Auth.onChange(renderAuth);
+      Auth.init().catch(err => {
+        log('认证初始化失败：' + err.message, 'err');
+        authErr('authErrorMsg', err.message);
+      });
+    } else {
+      updateUserChip({ stage: 'local' });
+      log('提示：未配置 Supabase（assets/js/auth-config.js 为空），当前为本地模式：不登录、使用本地语料。');
+    }
   }
 
   document.addEventListener('DOMContentLoaded', init);

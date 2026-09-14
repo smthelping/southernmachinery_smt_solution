@@ -151,6 +151,37 @@ textarea.input{resize:vertical;}
 .preview{width:100%;height:78vh;min-height:520px;border:0;display:block;background:#eef2f7;}
 .sm-mini-table td,.sm-mini-table th{padding:6px 8px;font-size:12.5px;}
 
+/* ---------------- 登录门禁 ---------------- */
+.auth-gate{
+  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(140deg,#083a75,#0b4f9e 55%,#0a2f5c);padding:24px;overflow:auto;
+}
+.auth-card{
+  width:100%;max-width:420px;background:#fff;border-radius:14px;padding:26px 26px 22px;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+}
+.auth-brand{margin-bottom:18px;}
+.auth-brand .logo{font-size:24px;font-weight:800;color:var(--blue-d);letter-spacing:.5px;}
+.auth-brand .logo span{color:var(--orange);}
+.auth-brand .sub{font-size:12.5px;color:var(--mute);margin-top:2px;}
+.auth-card h3{font-size:16px;color:var(--blue-d);margin-bottom:10px;}
+.auth-card label{font-size:12.5px;color:#41566e;font-weight:600;}
+.auth-card label .input{margin-top:4px;font-weight:400;}
+.auth-error{
+  margin-top:12px;padding:9px 12px;border-radius:8px;font-size:12.5px;line-height:1.6;
+  background:#fff5f5;border:1px solid #f0c3c3;color:#8f1d1d;
+}
+.auth-error.info{background:#f3f8ff;border-color:#cfe0f3;color:#29527d;}
+.auth-qr{display:flex;justify-content:center;padding:10px 0;}
+.auth-qr img{width:180px;height:180px;border:1px solid var(--line);border-radius:10px;background:#fff;}
+.auth-secret{
+  display:block;margin-top:6px;padding:9px 11px;background:#f5f8fc;border:1px dashed var(--line);
+  border-radius:8px;font-family:Consolas,monospace;font-size:13px;letter-spacing:.5px;
+  word-break:break-all;color:#24425f;
+}
+.auth-card .btn.block{width:100%;}
+.auth-card .btn.block.mt{margin-top:14px;}
+
 /* ---------------- 进度条 ---------------- */
 .progress{height:6px;border-radius:6px;background:#e6edf6;overflow:hidden;}
 .progress span{display:block;height:100%;background:linear-gradient(90deg,#0b4f9e,#2f8ce0);transition:width .3s ease;}

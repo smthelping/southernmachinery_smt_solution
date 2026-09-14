@@ -286,6 +286,7 @@ window.KB = (function () {
     return {
       total: docs.length,
       builtin: docs.filter(d => d.origin === 'builtin').length,
+      remote: docs.filter(d => d.origin === 'remote').length,
       user: docs.filter(d => d.origin === 'user').length,
       chars: docs.reduce((s, d) => s + (d.chars || 0), 0),
       categories: cats,
@@ -295,8 +296,19 @@ window.KB = (function () {
 
   function allDocs() { return docs; }
 
+  /**
+   * 用服务端资料库（Supabase，受 RLS 三重门禁保护）替换内置语料。
+   * 用户手工导入的文档保留，便于与远端语料叠加使用。
+   */
+  function loadRemote(remoteDocs) {
+    const remote = (remoteDocs || []).map(d =>
+      normalizeDoc(Object.assign({ origin: 'remote' }, d, { id: 'remote-' + (d.id || d.title) })));
+    docs = docs.filter(d => d.origin === 'user').concat(remote);
+    return stats();
+  }
+
   return {
     init, search, buildContext, docsForModel, addDoc, removeDoc, clearUser,
-    ingestFiles, stats, allDocs, tokenize
+    ingestFiles, stats, allDocs, tokenize, loadRemote
   };
 })();
