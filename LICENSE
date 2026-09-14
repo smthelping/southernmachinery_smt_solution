@@ -1,0 +1,102 @@
+PROPRIETARY LICENSE — ALL RIGHTS RESERVED
+Copyright (c) 2026 Shenzhen Southern Machinery Sales and Service Co., Ltd.
+(brand "SMThelp", website www.smthelp.com). All rights reserved.
+
+This repository (source code, documentation, UI design, prompt templates, product data
+and any other material published here — the "Work") is the proprietary property of
+Shenzhen Southern Machinery Sales and Service Co., Ltd. ("Southern Machinery").
+It is published for viewing, not for reuse.
+
+--------------------------------------------------------------------
+1. PERMITTED (no prior permission needed)
+--------------------------------------------------------------------
+You may:
+  a) read, browse and download the Work for personal learning, technical
+     evaluation, security review, or supplier due-diligence purposes;
+  b) link to this repository when referencing it.
+
+--------------------------------------------------------------------
+2. PROHIBITED (prior written permission required)
+--------------------------------------------------------------------
+You may NOT:
+  a) copy, modify, translate, adapt, republish, mirror or redistribute any part
+     of the Work, in source or any other form;
+  b) use the Work or any derivative of it for any commercial purpose, including
+     without limitation: resale, hosting or SaaS offerings, internal production
+     use, delivery to your own customers, or inclusion in bids or proposals;
+  c) use the Work to train, fine-tune or otherwise develop machine-learning
+     models intended for commercial distribution;
+  d) remove or alter any copyright, trademark or other proprietary notice;
+  e) use the names "SMThelp", "Southern Machinery", the Chinese company name or
+     any related marks in a way that suggests affiliation or endorsement.
+
+--------------------------------------------------------------------
+3. TRADEMARKS
+--------------------------------------------------------------------
+"SMThelp", "Southern Machinery" and associated logos are trademarks of
+Southern Machinery. No trademark or patent licence is granted by this document.
+
+--------------------------------------------------------------------
+4. THIRD-PARTY COMPONENTS
+--------------------------------------------------------------------
+The PDF-import feature loads pdf.js from a public CDN at runtime; pdf.js is
+licensed under the Apache License 2.0 and remains the property of its authors.
+No other third-party runtime dependency is bundled with the Work.
+
+--------------------------------------------------------------------
+5. DATA DISCLAIMER / NO WARRANTY
+--------------------------------------------------------------------
+Equipment parameters, solution templates and ROI figures in the Work are for
+reference only. They do not constitute a quotation, a commitment, or a technical
+warranty; binding specifications are those of a signed contract or technical
+agreement. The Work is provided "AS IS", without warranty of any kind, express
+or implied. Southern Machinery is not liable for any damage arising from use of
+the Work.
+
+--------------------------------------------------------------------
+6. LICENSING ENQUIRIES
+--------------------------------------------------------------------
+For commercial licensing, partnership or any use not permitted above, contact:
+  info@smthelp.com  ·  www.smthelp.com
+
+If you need terms that permit reuse, this is NOT the licence you are looking for —
+please contact us first.
+
+====================================================================
+中文版（如有歧义，以本中文版为准）
+====================================================================
+
+专有许可 — 保留所有权利
+版权所有 (c) 2026 深圳南方机械销售服务有限公司（品牌 "SMThelp"，官网 www.smthelp.com）
+
+本仓库（含源代码、文档、界面设计、提示词模板、产品数据等全部公开内容，下称"本作品"）
+为深圳南方机械销售服务有限公司（下称"本公司"）的专有财产，公开仅为**供查看**，并非授权复用。
+
+一、允许（无需事先许可）
+  1. 出于个人学习、技术评估、安全审计或供应商尽调目的在线阅读、浏览与下载；
+  2. 引用时以链接方式指向本仓库。
+
+二、禁止（须事先取得书面许可）
+  1. 复制、修改、翻译、改编、再发布、镜像或分发本作品的任何部分；
+  2. 将本作品或其衍生品用于任何商业目的，包括但不限于：转售、托管或 SaaS 服务、
+     内部生产系统使用、向第三方交付、纳入投标或方案材料；
+  3. 使用本作品训练、微调或以其他方式开发用于商业分发的机器学习模型；
+  4. 删除或篡改任何版权、商标或其他权属声明；
+  5. 以任何形式使用"SMThelp""南方机械"或相关标识暗示关联或背书。
+
+三、商标
+  "SMThelp""Southern Machinery"及相关标识为本公司商标。本声明不授予任何商标或专利许可。
+
+四、第三方组件
+  PDF 导入功能在运行时从公共 CDN 加载 pdf.js（Apache License 2.0），其权利归其作者所有。
+  本作品不内置其他第三方运行时依赖。
+
+五、数据与免责
+  本作品中的设备参数、方案模板与 ROI 数据仅供参考，不构成报价、承诺或技术保证；
+  具约束力的规格以正式合同或技术协议为准。本作品按"现状"提供，不提供任何明示或默示担保；
+  因使用本作品造成的任何损失，本公司不承担责任。
+
+六、授权咨询
+  如需商业授权、合作，或属于上述未允许的使用场景，请联系：info@smthelp.com · www.smthelp.com
+
+如需可自由复用的许可，本文件并非您需要的授权，请先与我们联系。

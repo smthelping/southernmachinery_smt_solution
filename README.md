@@ -48,4 +48,9 @@ npx serve .            # 或 python -m http.server 8123
 
 ## 许可
 
-内部工具的公开发布版。如需复用其中代码，请先获得 Southern Machinery 授权。
+**专有许可 · 保留所有权利（Proprietary, all rights reserved）** —— 全文见 [LICENSE](./LICENSE)。
+
+- ✅ **允许**：在线阅读、浏览、下载，用于个人学习、技术评估、安全审计与供应商尽调；引用时以链接指向本仓库
+- ❌ **禁止**（须事先书面许可）：复制 / 修改 / 翻译 / 再发布 / 镜像 / 分发；任何商业用途（转售、托管或 SaaS、内部生产系统、交付客户、投标材料）；用于训练商业分发的模型；移除权属声明
+
+商业授权与版权咨询：info@smthelp.com · www.smthelp.com
