@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SMThelp 客户方案自动生成器 · Pre-sales Solution Generator</title>
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">SMT<span>help</span></div>
+    <div class="sub">客户方案自动生成器 · Pre-sales Solution Generator</div>
+  </div>
+  <div class="top-actions">
+    <span id="llmBadge" class="badge off" title="LLM 连接状态">LLM 未配置</span>
+    <span id="kbBadge" class="badge" title="知识库状态">知识库加载中…</span>
+    <button id="btnSaveDraft" class="btn ghost sm">保存草稿</button>
+    <button id="btnRestoreDraft" class="btn ghost sm">恢复草稿</button>
+    <button class="btn ghost sm" data-goto="settings">设置</button>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="steps" id="stepNav">
+    <button class="step active" data-step="inquiry"><i>1</i><span><b>客户询盘</b><em>粘贴邮件并解析</em></span></button>
+    <button class="step" data-step="checklist"><i>2</i><span><b>前置条件</b><em>还需确认什么</em></span></button>
+    <button class="step" data-step="background"><i>3</i><span><b>客户背调</b><em>风险与合作建议</em></span></button>
+    <button class="step" data-step="match"><i>4</i><span><b>产品匹配</b><em>机型与供料配置</em></span></button>
+    <button class="step" data-step="solution"><i>5</i><span><b>方案生成</b><em>输出单 HTML</em></span></button>
+    <button class="step" data-step="kb"><i>6</i><span><b>知识库</b><em>导入与检索</em></span></button>
+    <button class="step" data-step="settings"><i>7</i><span><b>设置</b><em>接口与草稿</em></span></button>
+  </nav>
+
+  <main class="panels">
+
+    <!-- ============ 1. 客户询盘 ============ -->
+    <section class="panel active" id="panel-inquiry">
+      <div class="panel-head">
+        <h2>客户询盘输入与解析</h2>
+        <p>粘贴客户询盘邮件全文（支持中英文），系统自动拆解为客户、需求、元件、数量、认证、交期等结构化字段，供后续步骤使用。</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <h3>询盘原文</h3>
+            <div class="row">
+              <select id="sampleSelect" class="input sm">
+                <option value="">载入示例…</option>
+              </select>
+              <button id="btnClearInquiry" class="btn ghost sm">清空</button>
+            </div>
+          </div>
+          <textarea id="inquiryText" class="input mono" rows="18" placeholder="在此粘贴客户询盘邮件全文（含发件人、公司、需求描述、数量、认证、交期等）…"></textarea>
+          <div class="row between mt">
+            <span class="hint" id="inquiryMeta">0 字</span>
+            <button id="btnParseInquiry" class="btn primary">解析询盘</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>结构化字段（可手工修正）</h3>
+            <span class="badge" id="parseSource">未解析</span>
+          </div>
+          <div id="fieldsEmpty" class="empty">尚未解析。点击左侧「解析询盘」开始。</div>
+          <div id="fieldsForm" class="form-grid hidden">
+            <label>客户公司 <input class="input" data-field="customer_name"></label>
+            <label>中文名 <input class="input" data-field="customer_name_zh"></label>
+            <label>国家 <input class="input" data-field="country"></label>
+            <label>城市 <input class="input" data-field="city"></label>
+            <label>联系人 <input class="input" data-field="contact_person"></label>
+            <label>职位 <input class="input" data-field="contact_title"></label>
+            <label>邮箱 <input class="input" data-field="email"></label>
+            <label>电话 <input class="input" data-field="phone"></label>
+            <label>询盘号 <input class="input" data-field="inquiry_no"></label>
+            <label>询盘日期 <input class="input" data-field="inquiry_date" placeholder="YYYY-MM-DD"></label>
+            <label>行业 <input class="input" data-field="industry"></label>
+            <label>紧急度
+              <select class="input" data-field="urgency">
+                <option value="high">high / 高</option>
+                <option value="medium">medium / 中</option>
+                <option value="low">low / 低</option>
+              </select>
+            </label>
+            <label class="span-2">需求产品 / 设备（逗号分隔）<input class="input" data-array="products_requested"></label>
+            <label class="span-2">待插装元件（逗号分隔）<input class="input" data-array="component_types"></label>
+            <label class="span-2">认证要求（逗号分隔）<input class="input" data-array="certifications"></label>
+            <label>需求量 <input class="input" data-field="quantity_per_period"></label>
+            <label>PCB 规格 <input class="input" data-field="pcb_spec"></label>
+            <label>交期要求 <input class="input" data-field="lead_time_requested"></label>
+            <label>预算 <input class="input" data-field="budget"></label>
+            <label>付款方式 <input class="input" data-field="payment_terms"></label>
+            <label>贸易条款 <input class="input" data-field="incoterms" placeholder="CIF / FOB / EXW …"></label>
+            <label class="span-2">关键参数（每行 key=value）
+              <textarea class="input mono" rows="3" id="keySpecs"></textarea>
+            </label>
+            <label class="span-2">需求摘要（英文）
+              <textarea class="input" rows="3" data-field="summary_en"></textarea>
+            </label>
+            <label class="span-2">需求摘要（中文）
+              <textarea class="input" rows="3" data-field="summary_zh"></textarea>
+            </label>
+          </div>
+          <div id="missingHint" class="notice warn hidden"></div>
+          <div class="row mt">
+            <button class="btn primary" data-goto="checklist">保存并进入前置条件 →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. 前置条件 ============ -->
+    <section class="panel" id="panel-checklist">
+      <div class="panel-head">
+        <h2>前置条件与补充信息清单</h2>
+        <p>根据客户需求自动推导「还需向客户确认什么」，含优先级、确认理由与可直接发送的问句。勾选表示客户已确认。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>确认清单</h3>
+          <div class="row">
+            <button id="btnGenChecklist" class="btn primary">生成 / 重新生成</button>
+            <button id="btnCopyQuestions" class="btn ghost">复制问句（客户邮件用）</button>
+            <button id="btnSaveChecklist" class="btn ghost">仅保存修改</button>
+          </div>
+        </div>
+        <div id="checklistEmpty" class="empty">尚未生成清单。请先完成第 1 步解析，然后点击「生成 / 重新生成」。</div>
+        <div id="checklistWrap" class="hidden">
+          <div id="blockingBox" class="notice warn hidden"></div>
+          <table class="table editable">
+            <thead>
+              <tr><th style="width:56px">已确认</th><th style="width:70px">优先级</th><th style="width:96px">类别</th><th>事项 / Item</th><th>为什么必须确认</th><th>询盘中已知</th></tr>
+            </thead>
+            <tbody id="checklistBody"></tbody>
+          </table>
+          <div class="hint mt">提示：单元格可直接编辑；「已确认」用于记录客户回复进度。导出客户版邮件时只会发送未确认项。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3. 客户背调 ============ -->
+    <section class="panel" id="panel-background">
+      <div class="panel-head">
+        <h2>客户背景调查与合作建议</h2>
+        <p>由 LLM 基于客户公司信息生成公司概况、合作建议、风险提示与匹配策略。可粘贴你自行查到的资料（官网、LinkedIn、海关数据等）以提升准确度。</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>补充调查资料（可选）</h3></div>
+          <textarea id="bgNotes" class="input" rows="14" placeholder="粘贴客户官网简介、LinkedIn 公司页、展会信息、行业报道等…（可留空）"></textarea>
+          <div class="row between mt">
+            <span class="hint">留空时 AI 仅基于通用行业认知判断，并标注需人工核实项。</span>
+            <button id="btnGenBackground" class="btn primary">生成背调结论</button>
+          </div>
+          <div class="switch-row mt">
+            <label class="switch"><input type="checkbox" id="chkIncludeBackground"><span>把客户概况写入方案文档</span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>调查结论</h3>
+            <span class="badge" id="bgConfidence">—</span>
+          </div>
+          <div id="bgEmpty" class="empty">尚未生成。点击左侧「生成背调结论」。</div>
+          <div id="bgResult" class="hidden"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. 产品匹配 ============ -->
+    <section class="panel" id="panel-match">
+      <div class="panel-head">
+        <h2>产品匹配与配置建议</h2>
+        <p>先用本地知识库（产品库 + 历史方案全文）计算候选机型，再由 AI 结合历史方案给出机型选择、产线配置、供料方案与 ROI 测算。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>候选机型（本地知识库打分）</h3>
+          <div class="row">
+            <button id="btnRunMatch" class="btn primary">运行匹配（AI 精排）</button>
+            <button id="btnRecalcCand" class="btn ghost">重算候选</button>
+          </div>
+        </div>
+        <div id="candEmpty" class="empty">尚未计算。请先完成第 1 步解析。</div>
+        <table class="table hidden" id="candTable">
+          <thead><tr><th style="width:60px">选入</th><th style="width:130px">型号</th><th>名称</th><th style="width:70px">得分</th><th>匹配依据</th><th>历史方案依据</th></tr></thead>
+          <tbody id="candBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>匹配结论</h3><span class="badge" id="matchSource">—</span></div>
+        <div id="matchEmpty" class="empty">尚未运行匹配。</div>
+        <div id="matchResult" class="hidden"></div>
+      </div>
+
+      <details class="card" id="newProductCard">
+        <summary><b>没有匹配机型？用供应商资料生成新产品资料</b>（按公司品牌风格自动撰写，仅加入本次会话产品库）</summary>
+        <div class="grid-2 mt">
+          <div>
+            <textarea id="npText" class="input mono" rows="12" placeholder="粘贴供应商产品资料（型号、参数、说明书片段、官网复制内容均可，中英文不限）…"></textarea>
+            <label class="mt block">定位提示（可选）<input id="npHints" class="input" placeholder="例如：面向连接器插装的低成本供料器 / 主推机型"></label>
+            <div class="row mt">
+              <button id="btnNewProduct" class="btn primary">生成公司风格产品资料</button>
+              <button id="btnAddProduct" class="btn ghost" disabled>加入产品库</button>
+            </div>
+          </div>
+          <div id="npResult" class="empty">生成结果将显示在此处，可核对后加入产品库参与匹配与方案撰写。</div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 5. 方案生成 ============ -->
+    <section class="panel" id="panel-solution">
+      <div class="panel-head">
+        <h2>方案生成与输出</h2>
+        <p>汇总前四步结果，生成完全针对该客户的方案正文，输出为可离线打开的单个 HTML 文档；预览区可直接修改与补充。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>文档设置</h3>
+          <div class="row wrap">
+            <select id="genMode" class="input sm" style="width:230px" title="分章模式逐章生成，可中断续写，长方案更稳">
+              <option value="sectioned">分章生成（长方案，推荐）</option>
+              <option value="oneshot">一次生成（快，短方案）</option>
+            </select>
+            <button id="btnGenSolution" class="btn primary">生成 / 重新生成方案正文</button>
+            <button id="btnResumeSections" class="btn ghost hidden">断点续写</button>
+            <button id="btnResetSections" class="btn ghost hidden">清空章节检查点</button>
+          </div>
+        </div>
+        <div id="genProgress" class="hidden"></div>
+        <div class="form-grid">
+          <label>方案编号 <input id="docNo" class="input"></label>
+          <label>日期 <input id="docDate" class="input" placeholder="YYYY/MM/DD"></label>
+          <label>编制人 <input id="docEditor" class="input"></label>
+          <label>输出语言
+            <select id="docLang" class="input">
+              <option value="both">中英双语</option>
+              <option value="en">仅英文</option>
+              <option value="zh">仅中文</option>
+            </select>
+          </label>
+        </div>
+        <div class="switch-row">
+          <label class="switch"><input type="checkbox" id="chkRoi" checked><span>包含 ROI 测算</span></label>
+          <label class="switch"><input type="checkbox" id="chkCases" checked><span>包含公司实力与案例</span></label>
+          <label class="switch"><input type="checkbox" id="chkRisks"><span>包含内部风险提示（不发给客户）</span></label>
+          <label class="switch"><input type="checkbox" id="chkCommercial"><span>包含商务条款（价格 / 付款）</span></label>
+        </div>
+        <details class="mt" id="commercialBox">
+          <summary>商务条款内容（勾选上项后写入文档，默认空白）</summary>
+          <div class="form-grid mt" id="commercialForm"></div>
+          <div class="hint">价格属敏感信息：仅在你明确需要报给客户时填写。</div>
+        </details>
+      </div>
+
+      <div class="card" id="validationCard">
+        <div class="card-head">
+          <h3>内容校验（契约 + 数字溯源）</h3>
+          <div class="row">
+            <span class="badge" id="validateBadge">未校验</span>
+            <button id="btnValidateNow" class="btn ghost sm">校验当前预览内容</button>
+          </div>
+        </div>
+        <div id="validationReport" class="hint">生成方案后自动校验：型号是否在产品库内、规格参数与正文数字是否能在客户输入 / 产品库 / 本地测算中找到出处。</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>方案预览（可直接编辑）</h3>
+          <div class="row wrap">
+            <button id="btnExportHtml" class="btn primary">导出单 HTML</button>
+            <button id="btnExportMd" class="btn ghost">导出 Markdown</button>
+            <button id="btnPrintDoc" class="btn ghost">打印 / 存 PDF</button>
+            <button id="btnCopyBody" class="btn ghost">复制正文</button>
+            <button id="btnResetPreview" class="btn ghost">还原为生成结果</button>
+          </div>
+        </div>
+        <div class="hint" id="previewHint">预览区内容可点击直接修改（所见即所得）；导出时以预览区当前内容为准。</div>
+        <div class="preview-shell">
+          <iframe id="docFrame" class="preview" title="方案预览"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 6. 知识库 ============ -->
+    <section class="panel" id="panel-kb">
+      <div class="panel-head">
+        <h2>解决方案知识库</h2>
+        <p>内置本库 126 份历史解决方案 / 报价 / 产品册全文转录；也可导入新的方案文档（txt / md / csv / json / pdf）参与检索与生成。</p>
+      </div>
+
+      <div class="stat-row" id="kbStats"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>导入历史方案文档</h3></div>
+          <input type="file" id="kbFiles" class="input" multiple accept=".txt,.md,.markdown,.csv,.json,.pdf,.log,.html">
+          <div class="row between mt">
+            <span class="hint">支持多选。PDF 需联网加载解析库；Office 文件请先导出为 PDF/txt。</span>
+            <button id="btnImportKb" class="btn primary">导入</button>
+          </div>
+          <div id="kbImportLog" class="hint mt"></div>
+          <div id="kbUserList" class="mt"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>知识库检索</h3></div>
+          <div class="row">
+            <input id="kbQuery" class="input" placeholder="例如：odd form feeder / 连接器插件 / European Precision Customer / 12000 CPH">
+            <button id="btnKbSearch" class="btn primary">检索</button>
+          </div>
+          <div id="kbResults" class="mt hint">输入关键词后检索，可确认方案内容的历史出处。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>内置语料分类</h3></div>
+        <div id="kbCategories" class="chip-row"></div>
+        <div id="kbBuiltinList" class="mt"></div>
+      </div>
+    </section>
+
+    <!-- ============ 7. 设置 ============ -->
+    <section class="panel" id="panel-settings">
+      <div class="panel-head">
+        <h2>接口设置与草稿管理</h2>
+        <p>填写任意 OpenAI 兼容的接口（OpenAI / DeepSeek / 自建网关 / 本地 vLLM 等）。API Key 仅保存在本机浏览器，不会上传到本目录以外的任何地方。</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h3>LLM 接口</h3><span class="badge" id="llmState">未测试</span></div>
+          <div class="form-grid">
+            <label class="span-2">Base URL <input id="cfgBaseUrl" class="input" placeholder="https://api.openai.com/v1"></label>
+            <label class="span-2">API Key <input id="cfgApiKey" class="input" type="password" placeholder="sk-..."></label>
+            <label>模型 <input id="cfgModel" class="input" list="modelList" placeholder="gpt-4o-mini"></label>
+            <label>temperature <input id="cfgTemp" class="input" type="number" step="0.1" min="0" max="2"></label>
+            <label>超时（毫秒） <input id="cfgTimeout" class="input" type="number" step="1000"></label>
+            <label class="switch"><input type="checkbox" id="cfgJsonMode"><span>使用 JSON 模式（response_format）</span></label>
+          </div>
+          <datalist id="modelList"></datalist>
+          <div class="row mt">
+            <button id="btnSaveLlm" class="btn primary">保存</button>
+            <button id="btnTestLlm" class="btn ghost">测试连接</button>
+            <button id="btnListModels" class="btn ghost">拉取模型列表</button>
+          </div>
+          <div id="llmTestOut" class="hint mt"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>草稿与数据</h3></div>
+          <div id="draftInfo" class="hint"></div>
+          <div class="row wrap mt">
+            <button id="btnExportDraft" class="btn ghost">导出草稿 JSON</button>
+            <button id="btnImportDraft" class="btn ghost">导入草稿 JSON</button>
+            <input type="file" id="draftFile" class="hidden" accept=".json">
+            <button id="btnClearDraft" class="btn danger">清除本地草稿</button>
+          </div>
+          <div class="notice mt">
+            <b>数据边界：</b>内置知识库仅在本机浏览器中加载，不会被上传；调用 AI 时，只有当前步骤所需的文本片段会发送到你配置的接口。
+          </div>
+          <div class="notice warn mt">
+            <b>合规提示：</b>报价、客户名单、折扣策略属敏感信息；「包含商务条款」默认关闭，导出前请确认文档不含内部信息。
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="logbar">
+  <span class="dot" id="logDot"></span>
+  <span id="logText">就绪</span>
+  <span class="spacer"></span>
+  <button id="btnClearLog" class="btn ghost xs">清空日志</button>
+</div>
+
+<script src="data/kb.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/products.js"></script>
+<script src="assets/js/llm.js"></script>
+<script src="assets/js/knowledge.js"></script>
+<script src="assets/js/parse.js"></script>
+<script src="assets/js/match.js"></script>
+<script src="assets/js/validate.js"></script>
+<script src="assets/js/docgen.js"></script>
+<script src="assets/js/sections.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/export.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
