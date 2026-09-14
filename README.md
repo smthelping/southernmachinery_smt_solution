@@ -1,0 +1,2 @@
+# southernmachinery_smt_solution
+基于客户需求生成匹配公司产品的定制化和独一无二的解决方案
