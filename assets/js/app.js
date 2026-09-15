@@ -1230,7 +1230,18 @@
   }
 
   function renderAuth(st) {
-    if (st.stage === 'local' || (authLocalOptOut && st.stage !== 'ready')) {
+    // ready = 已通过全部门禁：隐藏遮罩、解除 inert，并加载客户资料库。
+    // ⚠️ 这里原先只放行 local，ready 会落到下面的 showAuthGate(true)：
+    //    结果是登录成功后遮罩仍盖在最上层（内部各状态页又都已隐藏），
+    //    表现为"点了登录没反应、整个界面点不动"。**登录流程本身是成功的**，
+    //    坏的是这一步——状态机前进了，UI 没跟上。
+    if (st.stage === 'ready') {
+      showAuthGate(false);
+      updateUserChip(st);
+      loadRemoteCorpus();
+      return;
+    }
+    if (st.stage === 'local' || authLocalOptOut) {
       showAuthGate(false);
       updateUserChip(st);
       return;
@@ -1250,7 +1261,7 @@
     if (st.stage === 'mfa_enroll' && !$('#authQr').innerHTML) {
       startEnroll().catch(err => authErr('authError3', err.message));
     }
-    if (st.stage === 'ready') loadRemoteCorpus();
+    // 注：ready 已在函数开头处理（隐藏遮罩 + loadRemoteCorpus），不会再走到这里
   }
 
   function startEnroll() {
