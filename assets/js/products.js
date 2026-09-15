@@ -576,6 +576,200 @@ window.SM_PRODUCTS = {
       highlights_zh: ['减少人工清理，保持线体整洁'],
       highlights_en: ['Reduces manual housekeeping'],
       sources: ['Internal solution archive (not public)']
+    },
+
+    /* ======================================================================
+     * 2026 LED SMT 整线（型号与参数逐条摘自
+     *   _index/text/ICS_SMT_LED_Line_Solution_Southern_Machinery_v3.txt
+     *   方案编号 NO: IC26060301 / 2026-06-03 / Edit: Wayne Guo）
+     * 说明：此前产品库仅有旧一代 LED 贴片机（S-320 / S-520 / S-530 / S-1200），
+     *       2026 年在用的整线机型缺失，会给真实询盘匹配出错误的型号。
+     * ====================================================================== */
+    {
+      id: 'S-V1200',
+      model: 'S-V1200',
+      category: 'line',
+      zh: 'PCB 真空上板机（长板）',
+      en: 'PCB Vacuum Loader (long board)',
+      aliases: ['SV1200', 'vacuum loader', 'loader', '上板机', '真空上板', '长板上板', '1.2m PCB'],
+      summary_zh: '面向 1.2 m LED 长板的自动真空上板机，带上下操作平台与直通输送模式，Mitsubishi PLC 控制，SMEMA 接口。',
+      summary_en: 'Automatic vacuum loader for 1.2 m LED long boards; up/down operation platform, pass-through conveyor mode, Mitsubishi PLC control and SMEMA interface.',
+      specs: {
+        '最大 PCB / Max PCB': 'L1200 × W390 mm',
+        'PCB 存储量 / Magazine Capacity': '100 pcs',
+        '输送速度 / Conveyor Speed': '9 m/min',
+        '输送高度 / Conveyor Height': '920 ± 30 mm',
+        '输送方向 / Direction': 'L→R / R→L',
+        '可选步距 / Selectable Pitch': '10 / 20 / 30 / 40 / 50 mm',
+        '外形尺寸 / Dimensions': 'L1500 × W950 × H1200 mm',
+        '电源 / 气源 / Power / Air': '单相 220V 50Hz / 0.4–0.6 MPa',
+        '净重 / Net Weight': '约 150 kg'
+      },
+      highlights_zh: ['真空吸板，缩短上板时间', '直通模式可当输送段使用', 'SMEMA 接口便于连线'],
+      highlights_en: ['Vacuum loading shortens load time', 'Pass-through mode works as a conveyor', 'SMEMA interface for line integration'],
+      sources: ['Internal solution archive (not public)']
+    },
+    {
+      id: 'SP-1200',
+      model: 'SP-1200',
+      category: 'line',
+      zh: '大幅面 LED 钢网印刷机',
+      en: 'Large-Format LED PCB Stencil Printer',
+      aliases: ['SP1200', 'printer', 'stencil printer', 'solder paste printer', '印刷机', '钢网印刷', '锡膏印刷', '1.2m 印刷'],
+      summary_zh: '面向 1.2 m 长 LED 板的钢网印刷机，线性马达控制刮刀压力，支持大尺寸钢网，印刷质量直接影响后段贴装与 AOI 表现。',
+      summary_en: 'Stencil printer for 1.2 m LED boards; linear-motor controlled squeegee pressure and large stencil support — printing quality directly drives placement and AOI performance.',
+      specs: {
+        '重复定位精度 / Repeat Accuracy': '±0.01 mm',
+        '印刷精度 / Printing Accuracy': '±0.025 mm',
+        '循环时间 / Cycle Time': '<9 s（不含印刷与清洗动作）',
+        '换线时间 / Product Changeover': '<5 min',
+        '兼容钢网 / Compatible Stencil': 'Min 470 × 370 mm，Max 1500 × 737 mm',
+        '兼容 PCB / Compatible PCB': 'Max 1200 × 310 mm，Min 50 × 50 mm',
+        'PCB 允许翘曲 / Allowed Warpage': '<1%（按对角线长度）',
+        'PCB 底部间隙 / Bottom Clearance': '10 mm',
+        'PCB 边缘间隙 / Edge Clearance': '3 mm',
+        '传输速度 / Transport Speed': '100–1500 mm/sec，可编程',
+        '传输方向 / Transport Direction': 'L→R / R→L / R→R / L→L',
+        '刮刀速度 / Squeegee Speed': '10–150 mm/sec',
+        '刮刀压力 / Squeegee Pressure': '0–15 kg',
+        '刮刀角度 / Squeegee Angle': '60° 标准（可选 55° / 45°）',
+        '气源 / Air': '4–6 kg/cm²',
+        '电源 / Power': 'AC 220V ±10%，50/60Hz，单相 2.5 kW',
+        '外形尺寸 / Dimensions': '1400 × 1200 × 1450 mm',
+        '重量 / Weight': '约 1000 kg'
+      },
+      highlights_zh: ['大尺寸钢网与长板兼容', '钢网底部擦拭与清洗联动', '为后段贴装与 AOI 提供稳定印刷基础'],
+      highlights_en: ['Large stencil and long-board compatible', 'Integrated stencil cleaning', 'Stable printing basis for placement and AOI'],
+      sources: ['Internal solution archive (not public)']
+    },
+    {
+      id: 'S-600SV',
+      model: 'S-600SV',
+      category: 'line',
+      zh: '高速贴片机（长板 LED）',
+      en: 'High-Speed SMT Placement Machine (long board)',
+      aliases: ['S600SV', 'S600', 'mounter', 'placement', 'pick and place', '贴片机', '高速贴片机', 'LED 贴片', '长板贴片'],
+      summary_zh: 'LED 整线的主产能工位，支持 1200 × 500 mm 长板与 12 贴装头，飞拍相机 12 组，视觉对位 + Mark 校正。',
+      summary_en: 'Main capacity station of the LED line: 1200 × 500 mm long-board support, 12 placement heads, 12 flying cameras, vision alignment with Mark correction.',
+      specs: {
+        '贴装速度 / Placement Speed': '48,000 CPH（最优参考）',
+        '贴装头数量 / Mounting Heads': '12',
+        '最大 PCB / Max PCB': '1200 × 500 mm',
+        '最小 PCB / Min PCB': '50 × 50 mm',
+        'PCB 厚度 / PCB Thickness': '0.5–5 mm',
+        '重复精度 / Repeat Precision': '±0.05 mm',
+        '机械精度 / Mechanical Precision': '±0.02 mm',
+        '图像识别精度 / Vision Precision': '±0.02 mm',
+        '元件范围 / Component Range': '0201–16 mm（前相机标配）；0603–25 mm（后相机选配）',
+        '元件高度 / Component Height': '标准 ≤16 mm；特殊 ≤10 mm',
+        '飞拍相机 / Flying Vision Camera': '12 pcs 标配，1 pc 选配',
+        'MARK 相机 / Mark Camera': '1 pc',
+        'PCB 夹紧 / PCB Clamping': '气缸夹紧，轨道宽度可调',
+        '轨道 / Rail': '三段式固定轨道',
+        '操作系统 / Operating System': 'Windows 7'
+      },
+      highlights_zh: ['长板（1.2 m）贴装能力', '12 头 + 飞拍，产能与精度兼顾', '视觉对位 + Mark 校正'],
+      highlights_en: ['Handles 1.2 m long boards', '12 heads with flying vision', 'Vision alignment with Mark correction'],
+      sources: ['Internal solution archive (not public)']
+    },
+    {
+      id: 'S-460E-L',
+      model: 'S-460E-L',
+      category: 'line',
+      zh: '1.5 m 接驳输送机',
+      en: '1.5 M Transfer Conveyor',
+      aliases: ['S460EL', 'S460E', 'conveyor', 'transfer conveyor', 'buffer conveyor', '接驳台', '输送机', '接驳段'],
+      summary_zh: '印刷、贴装、回流、AOI 与下板之间的输送与缓冲段，PLC 控制、可调速、防静电结构，SMEMA 兼容。',
+      summary_en: 'Transfer and buffer conveyor between printing, placement, reflow, AOI and unloading stations; PLC controlled, adjustable speed, anti-static structure, SMEMA compatible.',
+      specs: {
+        '输送长度 / Conveyor Length': '1.5 m',
+        '输送速度 / Speed': '0.5–20 m/min 可调',
+        '传输高度 / Transfer Height': '900 ± 20 mm',
+        '输送方向 / Direction': 'L→R / R→L（按项目确定）',
+        '控制 / Control': 'PLC 控制，可调速，防静电输送结构',
+        '操作 / Operation': '启停按钮、检测/停止功能',
+        '接口 / Interface': 'SMEMA',
+        '电源 / Power': 'AC 220V 单相'
+      },
+      highlights_zh: ['可作缓冲段平衡线体节拍', 'SMEMA 标准接口'],
+      highlights_en: ['Works as buffer to balance line takt', 'Standard SMEMA interface'],
+      sources: ['Internal solution archive (not public)']
+    },
+    {
+      id: 'S-6600',
+      model: 'S-6600',
+      category: 'line',
+      zh: '六温区回流焊炉',
+      en: '6-Zone Reflow Oven',
+      aliases: ['S6600', 'reflow', 'reflow oven', '回流焊', '回流炉', '六温区'],
+      summary_zh: 'LED 整线回流焊接设备，上 6 + 下 6 小循环加热区，上热风下红外，适用无铅/有铅工艺，网带宽度 450 mm。',
+      summary_en: 'Reflow soldering oven for the LED line: 6 top + 6 bottom small-cycle zones, top hot air with bottom infrared, lead-free and lead-based compatible, 450 mm mesh belt.',
+      specs: {
+        '控制方式 / Control': '仪表控制',
+        '加热区 / Heating Zones': '上 6 + 下 6 小循环加热区',
+        '加热方式 / Heating Method': '上：热风；下：红外',
+        '加热区长度 / Heating Zone Length': '2300 mm',
+        '网带宽度 / Mesh Belt Width': '450 mm',
+        'PCB 尺寸范围 / PCB Size Range': '50–1200 mm',
+        '最大 PCB 高度间隙 / Max PCB Clearance': '25 mm',
+        '输送方向 / 方式': '左→右 / 网带',
+        '网带高度 / Belt Height': '900 ± 20 mm',
+        '输送速度 / Conveyor Speed': '0–1.8 m/min',
+        '温度精度 / 范围': '±1–±2°C 静态 / 室温–300°C',
+        '适用焊料 / Solder Type': '无铅焊料 / 有铅焊料',
+        '电源 / Power': '380V，50Hz，三相五线',
+        '启动 / 运行功率': '36 kW / 9–12 kW',
+        '预热时间 / Warm-up Time': '约 20 min',
+        '外形尺寸 / 重量': '3800 × 960 × 1350 mm / 约 300 kg'
+      },
+      highlights_zh: ['上下独立温区，温控 ±1–±2°C', '约 20 min 快速升温', '长板需按样品做温度曲线确认'],
+      highlights_en: ['Independent top/bottom zones, ±1–±2°C accuracy', 'About 20 min warm-up', 'Long boards require sample-based profile verification'],
+      sources: ['Internal solution archive (not public)']
+    },
+    {
+      id: 'S-AX520XL',
+      model: 'S-AX520XL / S-AX520',
+      category: 'inspection',
+      zh: 'DIP 双面 AOI 检测机',
+      en: 'DIP Double-Side AOI',
+      aliases: ['SAX520XL', 'SAX520', 'DIP AOI', 'AOI', 'inspection', '光学检测', '外观检测', '双面检测'],
+      summary_zh: '一台设备完成上下双面检测（等效两台，节省空间），远心镜头 + 4 色可编程环形光源，支持锡点检测、弯曲/变形/缺针检测、SPC 预警与整板图像追溯。',
+      summary_en: 'One machine inspects both sides (equivalent to two machines, saving floor space); telecentric lens with 4-color programmable ring light; solder joint, bending, deformation and missing-pin detection, SPC warning and full-panel image traceability.',
+      specs: {
+        '检测方式 / Inspection': '上下双面同时检测',
+        '工业相机 / Industrial Camera': '5MP / 20MP 工业相机',
+        '像素转换率 / Pixel Resolution': '5MP：24 μm、15 μm；20MP：15 μm',
+        '视野 / FOV': '60 × 49 mm（5MP 24μm）；60 × 45 mm（20MP 15μm）',
+        '镜头 / Lens': '远心镜头（Telecentric）',
+        '光源 / Illuminant': '4 色可编程环形 LED（RGBW）',
+        'X/Y 运动 / X/Y Movement': 'AC 伺服双驱',
+        '轨道类型 / Track': '皮带标准，滚轮选配（高温/重载）',
+        '传输方向 / Direction': '左→右 / 右→左，出厂设定',
+        '操作系统 / OS': 'Windows 10',
+        '通讯 / Communication': 'Ethernet、SMEMA',
+        '电源 / 气源 / Power / Air': '单相 220V，50/60Hz，5A / 0.4–0.6 MPa',
+        '输送高度 / Conveyor Height': '900 ± 20 mm 标准，740 ± 20 mm 选配'
+      },
+      highlights_zh: ['一机双面，省产线空间', 'SPC 实时预警 + 整板图像追溯', '条码换线自动调宽并调用程序'],
+      highlights_en: ['Both sides in one machine', 'SPC warning and full-panel image traceability', 'Barcode-based line change with auto track widening'],
+      sources: ['Internal solution archive (not public)']
+    },
+    {
+      id: 'SULD1200',
+      model: 'SULD1200',
+      category: 'line',
+      zh: '自动下板机（长板）',
+      en: 'Automatic Unloader (long board)',
+      aliases: ['unloader', '下板机', '收板机', '长板下板'],
+      summary_zh: '检测后的自动收板工位，减少重复人工搬运，保护 1.2 m 长 LED 板在出板过程中不受损伤，可与线体通讯与输送高度统一规划。',
+      summary_en: 'Automatic unloading station after inspection; reduces repeated manual handling and protects 1.2 m LED boards, with line communication and conveyor-height planning.',
+      specs: {
+        '适用 / Application': 'LED 长板（1.2 m）自动下板与收板',
+        '详细参数 / Details': '按项目与收板方式确认（To be confirmed）'
+      },
+      highlights_zh: ['减少人工搬运，降低长板损伤风险', '与线体输送高度统一规划'],
+      highlights_en: ['Less manual handling, lower risk of long-board damage', 'Conveyor height planned with the line'],
+      sources: ['Internal solution archive (not public)']
     }
   ]
 };

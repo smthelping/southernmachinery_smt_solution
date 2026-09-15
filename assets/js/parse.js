@@ -80,12 +80,42 @@ window.Parse = (function () {
     const mPhone = raw.match(/(?:\+?\d[\d\s()-]{7,}\d)/);
     if (mPhone) f.phone = mPhone[0].trim();
 
-    // 公司名
+    // 公司名：① 显式标签行
     let mCo = raw.match(/(?:^\s*(?:Company|COMPANY|公司|公司名|Company Name)\s*[:：]\s*)(.+)$/m);
     if (mCo) f.customer_name = mCo[1].trim().replace(/[，,。.]$/, '');
+
+    // 公司名兜底 ① 正文自我介绍：We are XXX from / This is XXX / 我们是 XXX
+    // 真实询盘里公司名极少用 "Company:" 标注，多数写在正文第一段。
     if (!f.customer_name) {
+      const NOT_A_NAME = /^(interested|looking|currently|planning|considering|writing|seeking|wondering|an?\s|the\s|based|located|happy|glad|sorry|able|going|also|still|very|new|a\s)/i;
+      const intro = /(?:\b(?:we\s+are|we're|this\s+is|i\s+am\s+from|my\s+company\s+is|our\s+company\s+is)|(?:我们是|我司是|本公司是|本公司为|这边是|这是))\s*([A-Za-z0-9\u4e00-\u9fff][^,.;\n，；。]{0,48}?)(?=\s*(?:[,.;\n，；。]|\s+from\b|\s+based\b|\s+in\b|\s+an?\b|\s+the\b|$))/gi;
+      let mi;
+      while ((mi = intro.exec(raw))) {
+        const cand = mi[1].trim().replace(/[，,。.;；、]+$/, '');
+        if (!cand || NOT_A_NAME.test(cand)) continue;         // "We are interested in ..." 之类
+        if (!/[A-Z\u4e00-\u9fff]/.test(cand)) continue;        // 必须含大写字母或中文
+        if (cand.split(/\s+/).length > 6) continue;            // 公司名不会太长
+        f.customer_name = cand;
+        break;
+      }
+    }
+
+    // 公司名兜底 ② 邮箱域名（排除公共邮箱与国别后缀）
+    if (!f.customer_name && mEmail) {
+      const PUBLIC_MAIL = /^(gmail|googlemail|yahoo|ymail|hotmail|outlook|live|msn|icloud|me|aol|qq|163|126|sina|sohu|foxmail|protonmail|proton|mail|gmx|yandex|zoho|web|example|test|abc)$/i;
+      const CC = /^(com|net|org|edu|gov|co|cn|in|kr|jp|tr|vn|de|uk|us|eu|hk|tw|sg|my|th|id|ph|br|mx|ru|it|fr|es|nl|pl|ae|sa|eg|za|au|nz|io|biz|info|online|site|top|xyz)$/i;
+      const labels = (mEmail[0].split('@')[1] || '').split('.').filter(Boolean);
+      const dom = labels.find(l => l.length >= 3 && !PUBLIC_MAIL.test(l) && !CC.test(l));
+      if (dom) f.customer_name = dom.replace(/[-_]+/g, ' ').replace(/\b[a-z]/g, c => c.toUpperCase());
+    }
+
+    // 联系人兜底：「From:」行里若是纯邮箱，不能当人名用（交给下面的邮箱推断）
+    if (!f.contact_person) {
       mCo = raw.match(/(?:from|发件人)\s*[:：]\s*([^\n<]+)/i);
-      if (mCo) f.contact_person = mCo[1].trim();
+      if (mCo) {
+        const v = mCo[1].trim();
+        if (v && !/^[\w.+-]+@[\w-]+\.[\w.-]+$/.test(v)) f.contact_person = v;
+      }
     }
     if (/[\u4e00-\u9fff]/.test(f.customer_name)) { f.customer_name_zh = f.customer_name; }
 
