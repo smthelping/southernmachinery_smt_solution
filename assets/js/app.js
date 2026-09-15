@@ -1176,7 +1176,29 @@
   let authLocalOptOut = false;
   let corpusLoaded = false;
 
-  function showAuthGate(show) { $('#authGate').classList.toggle('hidden', !show); }
+  /**
+   * 门禁启用时，把门禁之外的顶层元素全部设为 inert + aria-hidden。
+   * 为什么不能只靠遮罩：.auth-gate 是 z-index:100 的全屏遮罩，视觉上盖住了主界面，
+   * 但底层表单仍在**焦点顺序**里——按 Tab 能把焦点移到门禁背后并操作它；读屏软件同样会读到。
+   * inert 会同时阻断焦点、指针事件与无障碍树。老旧浏览器不支持时为 no-op（遮罩仍然生效）。
+   */
+  function setAppInert(on) {
+    $$('body > *').forEach(el => {
+      if (el.id === 'authGate' || el.tagName === 'SCRIPT' || el.tagName === 'STYLE') return;
+      if (on) {
+        el.setAttribute('inert', '');
+        el.setAttribute('aria-hidden', 'true');
+      } else {
+        el.removeAttribute('inert');
+        el.removeAttribute('aria-hidden');
+      }
+    });
+  }
+
+  function showAuthGate(show) {
+    $('#authGate').classList.toggle('hidden', !show);
+    setAppInert(show);
+  }
 
   function authErr(id, msg) {
     const el = $('#' + id);
