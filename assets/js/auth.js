@@ -82,7 +82,14 @@ window.Auth = (function () {
       return set({ stage: 'must_change_password', session, profile, factorId: null, error: '' });
     }
 
-    // 门禁 2：MFA
+    // 门禁 2：MFA —— 仅对 mfa_required 为 true 的账号强制。
+    // 服务端 RLS 用同一个开关判定（public.mfa_required_for_me()），两边必须一致：
+    // 若前端强制、服务端不强制，用户会被卡在 TOTP 页；反之则形同虚设。
+    if (profile.mfa_required === false) {
+      try { await client.rpc('touch_last_login'); } catch (e) { /* 非关键 */ }
+      return set({ stage: 'ready', session, profile, factorId: null, error: '' });
+    }
+
     let currentLevel = 'aal1';
     try {
       const aal = await client.auth.mfa.getAuthenticatorAssuranceLevel();
