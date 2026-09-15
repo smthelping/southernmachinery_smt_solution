@@ -1242,6 +1242,11 @@
     updateUserChip(st);
 
     if (st.stage === 'error') authErr('authErrorMsg', st.error || '未知错误');
+    if (st.stage === 'reset_request') {
+      const n = $('#authResetNotice');
+      n.textContent = st.notice || '';
+      n.style.color = st.notice ? '#0b7a3d' : '';
+    }
     if (st.stage === 'mfa_enroll' && !$('#authQr').innerHTML) {
       startEnroll().catch(err => authErr('authError3', err.message));
     }
@@ -1293,6 +1298,54 @@
       } finally { $('#authSignIn').disabled = false; }
     });
     $('#authPassword').addEventListener('keydown', e => { if (e.key === 'Enter') $('#authSignIn').click(); });
+
+    /* ---- 忘记密码：通过绑定邮箱重置 ---- */
+    // 重置流程里没有 profiles（未登录/刚拿到 recovery 会话），
+    // 用会话邮箱代替做"不能包含邮箱前缀"的强度校验
+    function resetPwdIssues(v) {
+      const s = Auth.get().session;
+      const email = (s && s.user && s.user.email) || '';
+      return Auth.passwordIssues(v, { email });
+    }
+
+    $('#authForgot').addEventListener('click', () => Auth.goResetRequest());
+    $('#authBackToLogin').addEventListener('click', () => Auth.backToSignIn());
+    $('#authSendReset').addEventListener('click', async () => {
+      authErr('authError5');
+      const email = $('#authResetEmail').value.trim();
+      if (!email) { authErr('authError5', '请输入邮箱'); return; }
+      $('#authSendReset').disabled = true;
+      try {
+        await Auth.requestPasswordReset(email);
+        log('已请求发送重置邮件：' + email);
+      } catch (e) {
+        authErr('authError5', e.message);
+      } finally { $('#authSendReset').disabled = false; }
+    });
+    $('#authResetEmail').addEventListener('keydown', e => { if (e.key === 'Enter') $('#authSendReset').click(); });
+
+    $('#authResetPwd').addEventListener('input', () => {
+      const v = $('#authResetPwd').value;
+      const issues = resetPwdIssues(v);
+      const hint = $('#authResetPwdHint');
+      if (!v) { hint.textContent = ''; return; }
+      hint.textContent = issues.length ? '还需满足：' + issues.join('、') : '✅ 符合强度要求';
+      hint.style.color = issues.length ? '' : '#0b7a3d';
+    });
+    $('#authDoReset').addEventListener('click', async () => {
+      authErr('authError6');
+      const p1 = $('#authResetPwd').value, p2 = $('#authResetPwd2').value;
+      if (p1 !== p2) { authErr('authError6', '两次输入的密码不一致'); return; }
+      const issues = resetPwdIssues(p1);
+      if (issues.length) { authErr('authError6', '密码不满足要求：' + issues.join('、')); return; }
+      $('#authDoReset').disabled = true;
+      try {
+        await Auth.completePasswordReset(p1);
+        log('密码已重置，已用新密码进入系统。');
+      } catch (e) {
+        authErr('authError6', e.message);
+      } finally { $('#authDoReset').disabled = false; }
+    });
 
     $('#authNewPwd').addEventListener('input', () => {
       const v = $('#authNewPwd').value;

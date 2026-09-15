@@ -17,9 +17,18 @@ window.SM_AUTH_CONFIG = {
   supabaseUrl: 'https://nfbwnyndpdsnvocymlgn.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mYndueW5kcGRzbnZvY3ltbGduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNTgxNTIsImV4cCI6MjEwNDkzNDE1Mn0.vecMrcxZ8z4JgsJug3BXao1-q0L2NkYCRUIibQt8dAA',
 
-  // 团队资料库在服务端的表名（RLS 三重门禁：登录 + MFA(aal2) + 已改初始密码）
+  // 团队资料库在服务端的表名（RLS 门禁：登录 +（按账号要求 MFA 时需 aal2））
   corpusTable: 'knowledge_docs',
 
-  // 首次登录强制改密的最短长度（服务端策略见 supabase/migrations）
+  // 新密码最短长度（与服务端策略、强度校验保持一致）
   minPasswordLength: 12
+
+  // 「邮箱重置密码」回链地址（可选）。留空时用当前站点地址（location.origin + pathname），
+  // 这样本地调试与线上各走各的。若要让重置链接固定指到线上，取消下面这行注释：
+  //
+  // resetRedirectTo: 'https://solution.smthelp.eu/'
+  //
+  // ⚠️ 无论用哪种写法，该地址都必须加入 Supabase 白名单：
+  //    Dashboard → Authentication → URL Configuration → Redirect URLs
+  //    否则 Supabase 会回落到 Site URL，链接可能落到 localhost 而无法打开。
 };

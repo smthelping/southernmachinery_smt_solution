@@ -27,7 +27,37 @@
       </label>
       <div id="authError" class="auth-error hidden"></div>
       <button id="authSignIn" class="btn primary block mt">登录</button>
-      <div class="hint mt">仅限公司授权账号。首次登录需修改初始密码并完成 TOTP 双因素绑定。</div>
+      <button id="authForgot" class="btn ghost block mt">忘记密码？用绑定邮箱重置</button>
+      <div class="hint mt">仅限公司授权账号。忘记密码可通过绑定邮箱自助重置。</div>
+    </section>
+
+    <!-- 1') 忘记密码：申请发送重置邮件 -->
+    <section data-auth="reset_request" class="hidden">
+      <h3>重置密码</h3>
+      <div class="hint">输入你在本系统登记的邮箱，我们会发送一封含重置链接的邮件。点开链接后即可设置新密码；链接过期可重新申请。</div>
+      <label class="block mt">邮箱
+        <input id="authResetEmail" class="input" type="email" autocomplete="email" placeholder="name@smthelp.com">
+      </label>
+      <div id="authResetNotice" class="hint mt"></div>
+      <div id="authError5" class="auth-error hidden"></div>
+      <button id="authSendReset" class="btn primary block mt">发送重置邮件</button>
+      <button id="authBackToLogin" class="btn ghost block mt">返回登录</button>
+    </section>
+
+    <!-- 1'') 从邮件链接进入：设置新密码 -->
+    <section data-auth="reset_password" class="hidden">
+      <h3>设置新密码</h3>
+      <div class="hint">你正在通过邮件链接重置密码。设置完成后将直接进入系统。</div>
+      <label class="block mt">新密码
+        <input id="authResetPwd" class="input" type="password" autocomplete="new-password">
+      </label>
+      <label class="block mt">确认新密码
+        <input id="authResetPwd2" class="input" type="password" autocomplete="new-password">
+      </label>
+      <div id="authResetPwdHint" class="hint mt"></div>
+      <div id="authError6" class="auth-error hidden"></div>
+      <button id="authDoReset" class="btn primary block mt">提交并进入</button>
+      <button class="btn ghost block mt auth-signout">退出登录</button>
     </section>
 
     <!-- 2) 首登强制改密 -->

@@ -4,7 +4,11 @@
  * 门禁状态机（顺序即强制顺序）：
  *   local            未配置 Supabase → 本地模式（不登录，用本地 data/kb.js）
  *   signed_out       未登录
- *   must_change_password  首登强制改密（数据库触发器：改密才清除标记）
+ *   must_change_password  首登强制改密（**默认已关闭**：见
+ *                    supabase/migrations/20260915000003_password_change_optional.sql。
+ *                    机制保留，管理员可对个别账号重新开启该标记）
+ *   reset_request    申请「邮箱重置密码」（忘记密码入口）
+ *   reset_password   已从邮件链接进入（recovery 会话），设置新密码
  *   mfa_enroll       强制注册 TOTP
  *   mfa_verify       已注册但本次会话未完成第二因子（aal1 → 需 aal2）
  *   ready            全部通过，可读取客户资料库
@@ -16,7 +20,8 @@ window.Auth = (function () {
   const CFG = window.SM_AUTH_CONFIG || {};
   let client = null;
   let listeners = [];
-  let state = { stage: 'local', profile: null, session: null, error: '', factorId: null };
+  let recoveryPending = false;
+  let state = { stage: 'local', profile: null, session: null, error: '', factorId: null, notice: '' };
 
   function configured() { return !!(CFG.supabaseUrl && CFG.supabaseAnonKey); }
   function sdkReady() { return !!(window.supabase && window.supabase.createClient); }
@@ -38,6 +43,9 @@ window.Auth = (function () {
     if (/Password should be at least/i.test(m)) return '密码长度不足，请设置更长的密码';
     if (/same as the old password|should be different/i.test(m)) return '新密码不能与当前密码相同';
     if (/rate limit|too many/i.test(m)) return '尝试过于频繁，请稍后再试';
+    if (/For security purposes.*after \d+ seconds/i.test(m)) return '发送过于频繁，请稍后再试（重置邮件有频率限制）';
+    if (/Unable to validate email/i.test(m)) return '邮箱格式不正确';
+    if (/Email link is invalid or has expired/i.test(m)) return '链接已失效或过期，请重新申请重置邮件';
     if (/Invalid TOTP|invalid code/i.test(m)) return '验证码不正确，请核对后重试';
     if (/JWT|token/i.test(m)) return '登录状态已失效，请重新登录';
     return m || '操作失败';
@@ -53,9 +61,22 @@ window.Auth = (function () {
       });
     }
     client = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        // 必须为 true，否则「邮箱重置密码」的回链无法生效：
+        // 邮件链接形如 <站点>/#access_token=...&type=recovery，
+        // 只有让 SDK 解析 URL 才能建立 recovery 会话并抛出 PASSWORD_RECOVERY 事件。
+        detectSessionInUrl: true
+      }
     });
-    client.auth.onAuthStateChange(() => { resolve().catch(() => {}); });
+    client.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        recoveryPending = true;
+        return set({ stage: 'reset_password', error: '', notice: '' });
+      }
+      resolve().catch(() => {});
+    });
     return resolve();
   }
 
@@ -66,6 +87,12 @@ window.Auth = (function () {
     const sessionRes = await client.auth.getSession();
     const session = sessionRes && sessionRes.data ? sessionRes.data.session : null;
     if (!session) return set({ stage: 'signed_out', session: null, profile: null, factorId: null, error: '' });
+
+    // 从邮件链接进来（recovery 会话）：停在设置新密码页，不要因为已登录就放行。
+    // 否则用户点开链接后被直接送进主界面，重置流程等于没走完。
+    if (recoveryPending) {
+      return set({ stage: 'reset_password', session, profile: null, factorId: null, error: '', notice: '' });
+    }
 
     // 档案（RLS：仅本人可读）
     const profRes = await client.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
@@ -125,7 +152,8 @@ window.Auth = (function () {
 
   async function signOut() {
     if (client) await client.auth.signOut();
-    return set({ stage: 'signed_out', session: null, profile: null, factorId: null, error: '' });
+    recoveryPending = false;
+    return set({ stage: 'signed_out', session: null, profile: null, factorId: null, error: '', notice: '' });
   }
 
   async function changePassword(newPassword) {
@@ -150,6 +178,50 @@ window.Auth = (function () {
     if (ch.error) throw new Error(translate(ch.error.message));
     const v = await client.auth.mfa.verify({ factorId, challengeId: ch.data.id, code: String(code).trim() });
     if (v.error) throw new Error(translate(v.error.message));
+    return resolve();
+  }
+
+  /* --------------------------- 邮箱重置密码 --------------------------- */
+  /** 进入「申请重置密码」页 */
+  function goResetRequest() { return set({ stage: 'reset_request', error: '', notice: '' }); }
+
+  /** 返回登录页（若已建立会话——例如已点开重置链接——则回到正常判定，而非假装未登录） */
+  function backToSignIn() {
+    const hasSession = !!(state.session && state.session.user);
+    return hasSession ? resolve() : set({ stage: 'signed_out', error: '', notice: '' });
+  }
+
+  /**
+   * 发送重置密码邮件。
+   * 回链地址优先取 auth-config.js 的 resetRedirectTo，未配置时用当前站点地址。
+   * ⚠️ 该地址必须加入 Supabase 白名单（Auth → URL Configuration → Redirect URLs），
+   *    否则 Supabase 会回落到它自己的 Site URL，链接会落到别处。
+   * 出于防枚举考虑，服务端对「邮箱是否存在」一律返回成功，这里也不提示是否命中。
+   */
+  async function requestPasswordReset(email) {
+    if (!client) throw new Error('未配置 Supabase，无法发送重置邮件');
+    const to = CFG.resetRedirectTo || (location.origin + location.pathname);
+    const { error } = await client.auth.resetPasswordForEmail(String(email).trim(), { redirectTo: to });
+    if (error) throw new Error(translate(error.message));
+    return set({
+      stage: 'reset_request', error: '',
+      notice: '若该邮箱已在系统中登记，重置邮件已发出。请查收（含垃圾邮件箱），点开链接即可设置新密码。'
+    });
+  }
+
+  /**
+   * 完成重置：设置新密码。
+   * 走到这里说明已通过 recovery 会话证明「能控制该绑定邮箱」，设置成功后直接进入正常流程。
+   */
+  async function completePasswordReset(newPassword) {
+    if (!client) throw new Error('未配置 Supabase');
+    const { error } = await client.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(translate(error.message));
+    recoveryPending = false;
+    // 清掉地址栏里的 recovery token，避免刷新后又被带回重置页
+    if (/access_token=|type=recovery/.test(location.hash)) {
+      history.replaceState(null, '', location.pathname + location.search);
+    }
     return resolve();
   }
 
@@ -194,6 +266,7 @@ window.Auth = (function () {
   return {
     init, resolve, get, onChange, configured,
     signIn, signOut, changePassword, enrollTotp, verifyTotp,
+    goResetRequest, backToSignIn, requestPasswordReset, completePasswordReset,
     loadCorpus, passwordIssues,
     isReady: () => state.stage === 'ready',
     isAdmin: () => !!(state.profile && state.profile.role === 'admin')
