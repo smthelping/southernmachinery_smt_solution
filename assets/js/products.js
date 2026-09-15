@@ -1005,6 +1005,86 @@ window.SM_PRODUCTS = {
       highlights_zh: ['CCD 定位 + 激光测高，胶路精度高', '支持 AUTO CAD 导入，编程快', '一台设备适配多种胶水与供胶方式'],
       highlights_en: ['CCD positioning with laser height measurement', 'AutoCAD import simplifies programming', 'One machine handles multiple glue types'],
       sources: ['Internal solution archive (not public)']
+    },
+    {
+      id: 'S-P500A',
+      model: 'S-P500A',
+      category: 'peripheral',
+      zh: '泡沫助焊剂喷涂机',
+      en: 'Foam Fluxer',
+      aliases: ['foam fluxer', 'fluxer', '泡沫助焊剂', '助焊剂喷涂', '喷雾助焊', 'flux'],
+      summary_zh: '波峰焊前道泡沫助焊剂喷涂设备：高雾化进口喷嘴 2/2，PLC + 按钮/继电器控制，输送速度 0–2000 mm/min，可与波峰焊、插件线连成一线。',
+      summary_en: 'Foam fluxer for the wave-soldering pre-stage: two high-atomizing imported nozzles, PLC with button/relay control and 0–2000 mm/min conveyor, in-line with wave soldering and insertion lines.',
+      specs: {
+        '型号 / Model': 'S-P500A',
+        '外形尺寸 / Dimensions': 'L1200 × W700 × H1100 mm',
+        '重量 / Weight': '约 100 kg',
+        '控制 / Control': 'PLC + 按钮 / 继电器控制',
+        '输送高度 / PCB Transmission Height': '750 ± 50 mm',
+        '输送速度 / Transportation Speed': '0 – 2000 mm/min',
+        '输送方向 / Transfer Direction': '左 → 右（右 → 左可定制）',
+        'PCB 边缘间隙 / PCB Edge Space': '≥ 3 mm',
+        '轨道宽度 / Track Width': 'MAX 50 – 320 mm（手动调节）',
+        '喷嘴 / Nozzle': '数量 2/2；高雾化进口喷嘴',
+        '驱动方式 / Driving Mode': '固定式（stationary）',
+        '元件高度 / Components Height': '上 80 mm、下 50 mm（可定制）',
+        '产能 / Capacity': '无限制',
+        '排气 / Exhaust': '排气量 > 15 m³/min；配匹配排风机',
+        '电源 / Power Supply': 'AC 380V / 220V，50 – 60 Hz；总功率 0.05 kW',
+        '气源 / Air Pressure': '0.4 – 0.6 MPa'
+      },
+      highlights_zh: ['高雾化喷嘴，助焊剂覆盖均匀', '输送速度可调，适配不同节拍', '与波峰焊 / 插件线直接连线'],
+      highlights_en: ['High-atomizing nozzles for even flux coverage', 'Adjustable conveyor speed', 'In-line with wave soldering and insertion lines'],
+      sources: ['Internal solution archive (not public)']
+    },
+    {
+      id: 'SA1428-A',
+      model: 'SA1428-A',
+      category: 'peripheral',
+      zh: '防潮干燥柜',
+      en: 'Dry Cabinet',
+      aliases: ['dry cabinet', '干燥柜', '防潮柜', '除湿柜', '电子防潮箱'],
+      summary_zh: '用于 PCB / 元件 / 治具防潮储存的干燥柜：1mm 钢板柜体、5mm 强化玻璃门、4 组 3 英寸脚轮（含刹车），可选配湿度超限报警与温湿度曲线记录。',
+      summary_en: 'Dry cabinet for moisture-proof storage of PCBs, components and fixtures: 1 mm steel body, 5 mm tempered glass door, four 3-inch casters (two braked), optional over-humidity alarm and humidity/temperature curve logging.',
+      specs: {
+        '层板 / Laminates': '5 块标准层板，可调节（plate piece 5 standard）',
+        '颜色 / Color': '灰白（普通段）',
+        '电压 / Voltage': '220V',
+        '湿度精度 / Precision': '1% – 10%',
+        '软件 / Software': 'Manager V2 Humidity，提供数字温湿度曲线绘制功能（选配）',
+        '柜体结构 / Cabinet Structure': '1 mm 钢板制作，高强度、不变形、不透气；整体粉体喷涂',
+        '门体 / Door': '5 mm 强化玻璃，配高强度把手',
+        '脚轮 / Casters': '4 组 3 英寸脚轮，其中两个带刹车',
+        '选配 / Option': '湿度超过设定值报警功能（Alarm function）',
+        '包装 / Packing': '真空 + 熏蒸免检木箱'
+      },
+      highlights_zh: ['可调层板，柜内空间灵活配置', '可选湿度报警与曲线记录', '钢体 + 强化玻璃门，密封性好'],
+      highlights_en: ['Adjustable shelves for flexible layout', 'Optional humidity alarm and curve logging', 'Steel body with tempered glass door'],
+      sources: ['Internal solution archive (not public)']
+    },
+    {
+      id: 'S9203A',
+      model: 'S9203A',
+      category: 'peripheral',
+      zh: '精密干燥烤箱',
+      en: 'Precision Dry Oven',
+      aliases: ['dry oven', '干燥烤箱', '烤箱', '烘箱', '精密烤箱', 'baking oven'],
+      summary_zh: '实验室 / 产线用精密干燥烤箱：室温 +10 至 250°C，控温 0.1°C、稳定性 ±0.5°C，每腔 4 层，定时 1–9999 分钟。',
+      summary_en: 'Precision dry oven for lab and production use: RT+10 to 250 °C, 0.1 °C control resolution, ±0.5 °C stability, 4 shelves per chamber and 1–9999 min timer.',
+      specs: {
+        '电源 / Power Supply': '220V，50Hz',
+        '输入功率 / Input Power': '2000 W',
+        '温度范围 / Temperature Range': '室温 +10 – 250°C',
+        '控温精度 / Temperature Control': '0.1°C',
+        '温度稳定性 / Temperature Stability': '±0.5°C',
+        '内胆尺寸 / Inner Size': '600 × 550 × 600 mm (W×D×H)',
+        '外形尺寸 / Dimensions': '890 × 730 × 780 mm (W×D×H)',
+        '层架 / Shelves per Chamber': '4 pcs',
+        '定时范围 / Timing Range': '1 – 9999 min'
+      },
+      highlights_zh: ['控温 0.1°C、稳定性 ±0.5°C', '定时范围宽，适合长时烘烤', '内胆 600×550×600，容量适配产线样品'],
+      highlights_en: ['0.1 °C resolution with ±0.5 °C stability', 'Wide timing range for long bakes', '600×550×600 mm chamber'],
+      sources: ['Internal solution archive (not public)']
     }
   ]
 };
