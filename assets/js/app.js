@@ -581,7 +581,27 @@
     $('#btnPrintDoc').addEventListener('click', () => {
       if (!preExportGate()) return;
       capturePreview();
-      Exporter.print(state.previewHtml || DocGen.render(state), 'Solution');
+      if (!Exporter.printDoc($('#docFrame'))) {
+        log('未能定位预览文档，已改为打印当前页面。', 'err');
+        return;
+      }
+      log('已打开打印窗口：目标选择「另存为 PDF」即可得到文字可选的高清 PDF。');
+    });
+    $('#btnPdfFast').addEventListener('click', async () => {
+      if (!preExportGate()) return;
+      capturePreview();
+      const btn = $('#btnPdfFast');
+      btn.disabled = true;
+      log('正在生成 PDF（首次使用需联网加载排版库）…', 'busy');
+      try {
+        const blob = await Exporter.pdf($('#docFrame'), Exporter.filename(state, 'pdf'));
+        log(`PDF 已下载（${(blob.size / 1024 / 1024).toFixed(2)} MB，图片版）。需要文字可检索的版本请用「导出 PDF（文字可选）」。`);
+      } catch (err) {
+        log(`${err.message}，已为你改用打印窗口方式。`, 'err');
+        Exporter.printDoc($('#docFrame'));
+      } finally {
+        btn.disabled = false;
+      }
     });
     $('#btnCopyBody').addEventListener('click', async () => {
       if (!state.content && !state.previewHtml) { fail(new Error('尚未生成方案。')); return; }

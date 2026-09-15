@@ -20,7 +20,8 @@ window.Exporter = (function () {
   }
 
   function download(filename, content, mime) {
-    const blob = new Blob([content], { type: (mime || 'text/plain') + ';charset=utf-8' });
+    const binary = /^(application\/pdf|application\/octet-stream|image\/)/.test(mime || '');
+    const blob = new Blob([content], { type: (mime || 'text/plain') + (binary ? '' : ';charset=utf-8') });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -52,15 +53,63 @@ window.Exporter = (function () {
       JSON.stringify(state, null, 2), 'application/json');
   }
 
-  /** 打印 / 另存为 PDF */
-  function print(bodyHtml, title) {
-    const full = DocGen.exportHtml(bodyHtml, { title: title || 'Solution', lang: 'en' });
-    const w = window.open('', '_blank');
-    if (!w) { alert('浏览器阻止了弹出窗口，请允许弹窗后重试，或直接使用「导出单 HTML」。'); return; }
-    w.document.open();
-    w.document.write(full);
-    w.document.close();
-    setTimeout(() => { w.focus(); w.print(); }, 400);
+  /** 取承载方案文档的 iframe（app.js 传预览 iframe；未传则按 id 兜底查找） */
+  function frameOf(el) {
+    if (el && el.contentDocument) return el;
+    return document.getElementById('docFrame') || null;
+  }
+
+  /**
+   * 导出 PDF（矢量文字，质量最好）：直接打印预览 iframe。
+   * 用 iframe 而非 window.open —— 避免被弹窗拦截，且打印内容与预览区（含手工修改）完全一致。
+   */
+  function printDoc(frameEl) {
+    const frame = frameOf(frameEl);
+    const w = frame && frame.contentWindow;
+    if (!w) { window.print(); return false; }        // 兜底：打印主页面
+    try {
+      w.focus();
+      w.print();
+      return true;
+    } catch (e) {
+      window.print();
+      return false;
+    }
+  }
+
+  /** 按需从 CDN 加载 html2pdf（离线/被拦截时抛错，由调用方降级到打印方式） */
+  function loadHtml2Pdf() {
+    if (window.html2pdf) return Promise.resolve(window.html2pdf);
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
+      s.onload = () => window.html2pdf
+        ? resolve(window.html2pdf)
+        : reject(new Error('PDF 生成库加载后不可用'));
+      s.onerror = () => reject(new Error('无法加载 PDF 生成库（需要联网访问 CDN）'));
+      document.head.appendChild(s);
+    });
+  }
+
+  /**
+   * 一键下载 PDF（图片版）：无弹窗、无对话框，直接落盘。
+   * 代价是文字不可选中、文件较大、中文以图像呈现 —— 需要可编辑/可检索的 PDF 请用 printDoc()。
+   */
+  async function pdf(frameEl, name) {
+    const frame = frameOf(frameEl);
+    const doc = frame && frame.contentDocument;
+    const target = (doc && (doc.querySelector('.sm-doc') || doc.body)) || document.body;
+    const h2p = await loadHtml2Pdf();
+    const blob = await h2p().set({
+      margin: [8, 8, 10, 8],
+      filename: name || 'Solution.pdf',
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 794 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] }
+    }).from(target).outputPdf('blob');
+    download(name || 'Solution.pdf', blob, 'application/pdf');
+    return blob;
   }
 
   function htmlToPlainText(html) {
@@ -84,5 +133,8 @@ window.Exporter = (function () {
     }
   }
 
-  return { download, html, markdown, draft, print, copyText, htmlToPlainText, filename, safeName };
+  return {
+    download, html, markdown, draft, copyText, htmlToPlainText, filename, safeName,
+    print: printDoc, printDoc, pdf
+  };
 })();

@@ -355,11 +355,14 @@
           <div class="row wrap">
             <button id="btnExportHtml" class="btn primary">导出单 HTML</button>
             <button id="btnExportMd" class="btn ghost">导出 Markdown</button>
-            <button id="btnPrintDoc" class="btn ghost">打印 / 存 PDF</button>
+            <button id="btnPrintDoc" class="btn ghost">导出 PDF（文字可选）</button>
+            <button id="btnPdfFast" class="btn ghost">快速 PDF（一键下载）</button>
             <button id="btnCopyBody" class="btn ghost">复制正文</button>
             <button id="btnResetPreview" class="btn ghost">还原为生成结果</button>
           </div>
         </div>
+        <div class="hint"><b>两种 PDF：</b>「导出 PDF（文字可选）」打开打印窗口，目标选「另存为 PDF」——文字高清可检索、体积小，适合发客户；
+          「快速 PDF」直接下载、无需任何对话框，但为图片版（文字不可选中、体积较大）。</div>
         <div class="hint" id="previewHint">预览区内容可点击直接修改（所见即所得）；导出时以预览区当前内容为准。</div>
         <div class="preview-shell">
           <iframe id="docFrame" class="preview" title="方案预览"></iframe>

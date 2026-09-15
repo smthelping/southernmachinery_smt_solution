@@ -51,7 +51,16 @@ table.sm-t td.k{color:#38506b;width:38%;}
 .sm-internal{border:1px dashed #d98b5c;background:#fffaf5;border-radius:8px;padding:12px 16px;margin:18px 0;font-size:13px;color:#8a4b22;}
 .sm-internal h3{margin:0 0 6px;color:#a4491a;font-size:13.5px;}
 @page{size:A4;margin:12mm;}
-@media print{body{background:#fff;}.sm-doc{box-shadow:none;margin:0;max-width:none;}h2.sm-h2{page-break-after:avoid;}table.sm-t{page-break-inside:auto;}tr{page-break-inside:avoid;}.sm-top{-webkit-print-color-adjust:exact;}}
+@media print{
+body{background:#fff;}
+.sm-doc{box-shadow:none;margin:0;max-width:none;}
+.sm-top,.sm-foot,.sm-box,.sm-lead,.sm-internal,.sm-tag{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+h1.sm-title,h2.sm-h2,h3.sm-h3{page-break-after:avoid;break-after:avoid;}
+.sm-lead,.sm-box,.sm-internal,.sm-kv,.sm-foot{page-break-inside:avoid;break-inside:avoid;}
+table.sm-t{page-break-inside:auto;}
+thead{display:table-header-group;}
+tr{page-break-inside:avoid;break-inside:avoid;}
+}
 `;
 
   /* ----------------------------- 工具 ----------------------------- */
