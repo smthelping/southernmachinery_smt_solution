@@ -276,7 +276,11 @@ window.LLM = (function () {
         '模型：' + c.model
       ];
       if (reachable) {
-        lines.push('诊断：域名可达，但请求被**浏览器跨域策略（CORS）**拦下——该网关未开放浏览器直连。');
+        // ⚠️ 只能说"最可能"：no-cors 探针能通只代表域名有响应，
+        //    DNS 污染/网络劫持同样会让它误报（实测踩过），所以不把话说死。
+        lines.push('诊断：域名有响应，但请求被浏览器拦下——**最可能是该网关未开放跨域（CORS）**。');
+        lines.push('确认方法（免密钥，只做跨域预检）：');
+        lines.push('  node tools/llm_check.mjs ' + (c.baseUrl || '<BaseURL>'));
       } else if (!aborted) {
         // 浏览器侧分不清"域名不可达"和"网关直接拒绝跨域请求"，别硬下结论——实测踩过：
         // 某个网关 Node 侧 HTTP 200 正常，但网页里 23ms 就失败，两者表现完全一样。
