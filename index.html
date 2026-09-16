@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SMThelp 客户方案自动生成器 · Pre-sales Solution Generator</title>
-<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/css/app.css?v=1789519810027">
 </head>
 <body>
 
@@ -28,7 +28,8 @@
       <div id="authError" class="auth-error hidden"></div>
       <button id="authSignIn" class="btn primary block mt">登录</button>
       <button id="authForgot" class="btn ghost block mt">忘记密码？用绑定邮箱重置</button>
-      <div class="hint mt">仅限公司授权账号。忘记密码可通过绑定邮箱自助重置。</div>
+      <button id="authClearLocal" class="btn ghost block mt">清除本机登录状态并重试</button>
+      <div class="hint mt">仅限公司授权账号。忘记密码可通过绑定邮箱自助重置。<span class="hint"> · 构建 20260916-0850</span></div>
     </section>
 
     <!-- 1') 忘记密码：申请发送重置邮件 -->
@@ -448,7 +449,21 @@
       <div class="grid-2">
         <div class="card">
           <div class="card-head"><h3>LLM 接口</h3><span class="badge" id="llmState">未测试</span></div>
-          <div class="form-grid">
+
+          <div class="row between mt">
+            <label class="block" style="flex:1;min-width:180px">当前接口
+              <select id="cfgProfile" class="input"></select>
+            </label>
+            <div class="row" style="align-items:flex-end">
+              <select id="cfgPreset" class="input" style="max-width:200px" title="新增接口时预填哪家网关"></select>
+              <button id="btnAddLlm" class="btn ghost sm">＋ 新增</button>
+              <button id="btnDelLlm" class="btn ghost sm">删除</button>
+            </div>
+          </div>
+          <div class="hint">可保存多个 API 账号，随时切换；当前接口用于全部 AI 能力（解析 / 背调 / 分章生成）。</div>
+
+          <div class="form-grid mt">
+            <label class="span-2">名称 <input id="cfgName" class="input" placeholder="例如：DeepSeek 主力 / OpenAI 备用"></label>
             <label class="span-2">Base URL <input id="cfgBaseUrl" class="input" placeholder="https://api.openai.com/v1"></label>
             <label class="span-2">API Key <input id="cfgApiKey" class="input" type="password" placeholder="sk-..."></label>
             <label>模型 <input id="cfgModel" class="input" list="modelList" placeholder="gpt-4o-mini"></label>
@@ -494,22 +509,22 @@
   <button id="btnClearLog" class="btn ghost xs">清空日志</button>
 </div>
 
-<script src="data/kb.js"></script>
+<script src="data/kb.js?v=1789519810027"></script>
 <!-- Supabase SDK：defer 方式加载，失败时应用自动降级为本地模式 -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="assets/js/config.js"></script>
-<script src="assets/js/products.js"></script>
-<script src="assets/js/auth-config.js"></script>
-<script src="assets/js/auth.js"></script>
-<script src="assets/js/llm.js"></script>
-<script src="assets/js/knowledge.js"></script>
-<script src="assets/js/parse.js"></script>
-<script src="assets/js/match.js"></script>
-<script src="assets/js/validate.js"></script>
-<script src="assets/js/docgen.js"></script>
-<script src="assets/js/sections.js"></script>
-<script src="assets/js/store.js"></script>
-<script src="assets/js/export.js"></script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/config.js?v=1789519810027"></script>
+<script src="assets/js/products.js?v=1789519810027"></script>
+<script src="assets/js/auth-config.js?v=1789519810027"></script>
+<script src="assets/js/auth.js?v=1789519810027"></script>
+<script src="assets/js/llm.js?v=1789519810027"></script>
+<script src="assets/js/knowledge.js?v=1789519810027"></script>
+<script src="assets/js/parse.js?v=1789519810027"></script>
+<script src="assets/js/match.js?v=1789519810027"></script>
+<script src="assets/js/validate.js?v=1789519810027"></script>
+<script src="assets/js/docgen.js?v=1789519810027"></script>
+<script src="assets/js/sections.js?v=1789519810027"></script>
+<script src="assets/js/store.js?v=1789519810027"></script>
+<script src="assets/js/export.js?v=1789519810027"></script>
+<script src="assets/js/app.js?v=1789519810027"></script>
 </body>
 </html>

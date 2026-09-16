@@ -4,30 +4,113 @@
  * Ollama、vLLM、One-API 等），密钥仅保存在浏览器 localStorage。
  * ========================================================================== */
 window.LLM = (function () {
-  const STORE_KEY = 'sm.llm.cfg';
+  const STORE_KEY = 'sm.llm.cfg';        // 旧版：单配置（保留，仅用于一次性迁移）
+  const LIST_KEY = 'sm.llm.profiles';    // 多配置列表
+  const ACTIVE_KEY = 'sm.llm.active';    // 当前启用的配置 id
+  const TEST_TIMEOUT_MS = 20000;         // 测试连接的短超时：失败要快，别让人干等（旧版会等到 180s）
 
-  let cfg = Object.assign({}, SM_CONFIG.llm);
+  /* 常见网关预设：新增接口时一键带入，省去查 Base URL 与模型名 */
+  const PRESETS = [
+    { name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini', jsonMode: true },
+    { name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', jsonMode: true },
+    { name: '通义千问（兼容模式）', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus', jsonMode: true },
+    { name: 'Kimi 月之暗面', baseUrl: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k', jsonMode: true },
+    { name: '智谱 GLM', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash', jsonMode: true },
+    { name: '本地 Ollama', baseUrl: 'http://localhost:11434/v1', model: 'qwen2.5:7b', jsonMode: false },
+    { name: '自定义（留空自己填）', baseUrl: '', model: '', jsonMode: true }
+  ];
 
-  function load() {
+  let profiles = [];
+  let activeId = null;
+  let cfg = Object.assign({}, SM_CONFIG.llm);   // 当前生效配置（= 活动 profile 本体）
+
+  const newId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function fromPreset(p, idx) {
+    return Object.assign({
+      id: newId(),
+      name: p.name || ('接口 ' + (idx + 1)),
+      apiKey: '',
+      temperature: SM_CONFIG.llm.temperature,
+      timeoutMs: SM_CONFIG.llm.timeoutMs
+    }, p);
+  }
+  function persist() {
     try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (raw) cfg = Object.assign(cfg, JSON.parse(raw));
-    } catch (e) { /* ignore */ }
+      localStorage.setItem(LIST_KEY, JSON.stringify(profiles));
+      localStorage.setItem(ACTIVE_KEY, activeId || '');
+    } catch (e) { /* 存储不可用时退化为内存态 */ }
+  }
+  /** 从 Base URL 猜一个名字，便于在列表里区分（如 api.deepseek.com → deepseek.com） */
+  function guessName(baseUrl) {
+    try { return String(baseUrl).replace(/^https?:\/\//, '').split('/')[0]; }
+    catch (e) { return '接口'; }
+  }
+
+  /**
+   * 载入配置。首次运行会把旧版单配置（sm.llm.cfg）迁移成一条 profile，
+   * 因此老用户不用重新填 Key。
+   */
+  function load() {
+    try { profiles = JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); } catch (e) { profiles = []; }
+    if (!Array.isArray(profiles) || !profiles.length) {
+      let legacy = null;
+      try { legacy = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { legacy = null; }
+      const base = Object.assign({}, SM_CONFIG.llm, legacy || {});
+      profiles = [Object.assign({
+        id: newId(),
+        name: guessName(base.baseUrl || '') || '默认接口'
+      }, base)];
+      activeId = profiles[0].id;
+      persist();
+    }
+    activeId = localStorage.getItem(ACTIVE_KEY) || activeId;
+    if (!profiles.some(p => p.id === activeId)) activeId = profiles[0].id;
+    cfg = profiles.find(p => p.id === activeId);
     return cfg;
   }
+
+  /* ------------------------- 多接口管理 ------------------------- */
+  function list() { return profiles; }
+  function active() { return cfg; }
+  function use(id) {
+    const p = profiles.find(x => x.id === id);
+    if (!p) return cfg;
+    activeId = id; cfg = p; persist();
+    return cfg;
+  }
+  function add(presetIdx) {
+    const p = fromPreset(PRESETS[presetIdx] || PRESETS[PRESETS.length - 1], profiles.length);
+    profiles.push(p);
+    activeId = p.id; cfg = p; persist();
+    return cfg;
+  }
+  function remove(id) {
+    if (profiles.length <= 1) return { ok: false, reason: '至少保留一个接口配置' };
+    const i = profiles.findIndex(x => x.id === id);
+    if (i < 0) return { ok: false, reason: '未找到该配置' };
+    profiles.splice(i, 1);
+    if (activeId === id) { activeId = profiles[0].id; cfg = profiles[0]; }
+    persist();
+    return { ok: true, active: cfg };
+  }
   function save(patch) {
-    cfg = Object.assign(cfg, patch || {});
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(cfg)); } catch (e) { /* ignore */ }
+    Object.assign(cfg, patch || {});
+    // 防止名称被清空后在列表里认不出来
+    if (!String(cfg.name || '').trim()) cfg.name = guessName(cfg.baseUrl || '') || '接口';
+    persist();
     return cfg;
   }
   function get() { return cfg; }
   function ready() { return !!(cfg.baseUrl && cfg.model && cfg.apiKey); }
 
-  function endpoint() {
-    let base = (cfg.baseUrl || '').trim().replace(/\/+$/, '');
+  /** 由给定配置拼出 chat/completions 地址（不传则用当前生效配置） */
+  function endpointOf(c) {
+    let base = ((c || cfg).baseUrl || '').trim().replace(/\/+$/, '');
+    if (!base) return '';
     if (!/\/chat\/completions$/.test(base)) base += '/chat/completions';
     return base;
   }
+  function endpoint() { return endpointOf(cfg); }
 
   function explainError(status, bodyText) {
     const t = (bodyText || '').slice(0, 400);
@@ -131,25 +214,113 @@ window.LLM = (function () {
     return { data: extractJSON(raw), raw };
   }
 
-  /** 连接测试：发一条极小请求 */
-  async function test() {
-    const t0 = Date.now();
-    const out = await chat({
-      messages: [{ role: 'user', content: 'Reply with exactly: OK' }],
-      temperature: 0,
-      maxTokens: 16
-    });
-    return { ok: true, ms: Date.now() - t0, reply: out.trim().slice(0, 60), model: cfg.model };
+  /** 可达性探针：no-cors 请求能完成 = 域名可达（拿不到内容，只看通不通） */
+  async function probeReachable(base) {
+    if (!base) return false;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      await fetch(base, { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal });
+      return true;
+    } catch (e) {
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
-  /** 列出可用模型（部分网关支持 /models） */
-  async function listModels() {
-    let base = (cfg.baseUrl || '').trim().replace(/\/+$/, '').replace(/\/chat\/completions$/, '');
-    const res = await fetch(base + '/models', { headers: { Authorization: 'Bearer ' + cfg.apiKey } });
-    if (!res.ok) throw new Error('无法获取模型列表（HTTP ' + res.status + '）');
+  /**
+   * 连接测试。四个要点，都是踩过坑留下的：
+   *   1) 用**传进来的表单值**（不传才回落到已保存配置）——旧版只测已保存配置，
+   *      用户填完直接点「测试连接」其实测的是空配置，被误判成"连不通"；
+   *   2) 只发最小请求体（model + messages）：temperature / max_tokens / response_format
+   *      都可能被部分网关或推理模型拒绝，测通不通的阶段不该引入这些变量；
+   *   3) 短超时（20s）：失败要快。旧版沿用 180s 业务超时，网关不通时会长时间挂住；
+   *   4) 失败时区分「域名不可达」与「被浏览器跨域(CORS)拦下」，并回显实际请求地址。
+   */
+  async function test(override) {
+    const c = Object.assign({}, cfg, override || {});
+    const url = endpointOf(c);
+    if (!url) throw new Error('请先填写 Base URL。');
+    if (!c.model) throw new Error('请先填写模型名称。');
+    const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/i.test(url);
+    if (!c.apiKey && !isLocal) throw new Error('请先填写 API Key。');
+
+    const t0 = Date.now();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), TEST_TIMEOUT_MS);
+    let res = null, netErr = null;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + c.apiKey },
+        body: JSON.stringify({ model: c.model, messages: [{ role: 'user', content: 'ping' }] }),
+        signal: ctrl.signal
+      });
+    } catch (e) {
+      netErr = e;
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (netErr) {
+      const ms = Date.now() - t0;
+      const aborted = netErr.name === 'AbortError';
+      const baseNoSlash = (c.baseUrl || '').trim().replace(/\/+$/, '');
+      const reachable = aborted ? false : await probeReachable(baseNoSlash);
+      const lines = [
+        aborted
+          ? `请求超时（${ms}ms，上限 ${TEST_TIMEOUT_MS}ms）：接口未在预期时间内响应。`
+          : `无法完成请求（${ms}ms）：${netErr.message || netErr}`,
+        '请求地址：' + url,
+        '模型：' + c.model
+      ];
+      if (reachable) {
+        lines.push('诊断：域名可达，但请求被**浏览器跨域策略（CORS）**拦下——该网关未开放浏览器直连。');
+        lines.push('解决：换用支持浏览器直连的服务，或在本机/服务器架反向代理后指向它。');
+      } else if (!aborted) {
+        lines.push('诊断：连域名都没连上，通常是 Base URL 写错（多写/少写 /v1）、域名解析失败，或本机网络策略拦截。');
+      }
+      throw new Error(lines.join('\n'));
+    }
+
+    const ms = Date.now() - t0;
+    const text = await res.text().catch(() => '');
+    if (!res.ok) {
+      throw new Error([
+        explainError(res.status, text).replace(/\n/g, ' '),
+        '请求地址：' + url,
+        '模型：' + c.model
+      ].join('\n'));
+    }
+
+    let reply = '';
+    try {
+      const data = JSON.parse(text);
+      const choice = (data.choices || [])[0] || {};
+      reply = String((choice.message && choice.message.content) || choice.text || '').trim();
+    } catch (e) { /* 网关返回非 JSON 也不影响"能连通"这个结论 */ }
+
+    return { ok: true, ms, model: c.model, url, reply: reply.slice(0, 60) || '（空回复，但连接正常）' };
+  }
+
+  /** 列出可用模型（部分网关提供 /models；同样支持传入表单值） */
+  async function listModels(override) {
+    const c = Object.assign({}, cfg, override || {});
+    let base = (c.baseUrl || '').trim().replace(/\/+$/, '').replace(/\/chat\/completions$/, '');
+    if (!base) throw new Error('请先填写 Base URL。');
+    const res = await fetch(base + '/models', { headers: { Authorization: 'Bearer ' + c.apiKey } });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error('无法获取模型列表（HTTP ' + res.status + '）：' + t.slice(0, 200)
+        + '\n注：部分网关不提供 /models 接口，可手动填写模型名。');
+    }
     const data = await res.json();
     return (data.data || []).map(m => m.id).sort();
   }
 
-  return { load, save, get, ready, chat, chatJSON, test, listModels, extractJSON };
+  return {
+    load, save, get, ready, chat, chatJSON, test, listModels, extractJSON,
+    list, active, use, add, remove, endpointOf, PRESETS
+  };
 })();

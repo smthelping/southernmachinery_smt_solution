@@ -1089,31 +1089,84 @@
 
   /* ============================ 7. 设置 ============================ */
   function bindSettings() {
-    const cfg = LLM.load();
-    $('#cfgBaseUrl').value = cfg.baseUrl || '';
-    $('#cfgApiKey').value = cfg.apiKey || '';
-    $('#cfgModel').value = cfg.model || '';
-    $('#cfgTemp').value = cfg.temperature;
-    $('#cfgTimeout').value = cfg.timeoutMs;
-    $('#cfgJsonMode').checked = !!cfg.jsonMode;
+    /* ---- LLM 接口：支持保存多个 API 账号并随时切换 ---- */
+    // 表单 → 配置对象。测试连接 / 拉模型列表也用它，**不必先保存**——
+    // 旧版只测已保存配置，用户填完直接点测试会测到空配置，误判为"连不通"。
+    const formValues = () => ({
+      name: $('#cfgName').value.trim(),
+      baseUrl: $('#cfgBaseUrl').value.trim(),
+      apiKey: $('#cfgApiKey').value.trim(),
+      model: $('#cfgModel').value.trim(),
+      temperature: Number($('#cfgTemp').value) || 0.4,
+      timeoutMs: Number($('#cfgTimeout').value) || 180000,
+      jsonMode: $('#cfgJsonMode').checked
+    });
 
+    function fillForm(c) {
+      $('#cfgName').value = c.name || '';
+      $('#cfgBaseUrl').value = c.baseUrl || '';
+      $('#cfgApiKey').value = c.apiKey || '';
+      $('#cfgModel').value = c.model || '';
+      $('#cfgTemp').value = c.temperature;
+      $('#cfgTimeout').value = c.timeoutMs;
+      $('#cfgJsonMode').checked = !!c.jsonMode;
+    }
+    /** 重画接口下拉与预设下拉，并把测试状态归零（避免看到上一个接口的结论） */
+    function renderProfiles() {
+      const cur = LLM.active();
+      $('#cfgProfile').innerHTML = LLM.list().map(p =>
+        `<option value="${esc(p.id)}"${p.id === cur.id ? ' selected' : ''}>${esc(p.name || '(未命名)')}</option>`).join('');
+      $('#cfgPreset').innerHTML = LLM.PRESETS.map((p, i) => `<option value="${i}">${esc(p.name)}</option>`).join('');
+      $('#llmTestOut').innerHTML = '';
+      $('#llmState').className = 'badge';
+      $('#llmState').textContent = '未测试';
+    }
+
+    renderProfiles();
+    fillForm(LLM.load());
+
+    $('#cfgProfile').addEventListener('change', () => {
+      fillForm(LLM.use($('#cfgProfile').value));
+      renderProfiles();
+      fillForm(LLM.active());
+      refreshLlmBadge();
+      log('已切换 LLM 接口：' + (LLM.active().name || '(未命名)'));
+    });
+    $('#btnAddLlm').addEventListener('click', () => {
+      const c = LLM.add(Number($('#cfgPreset').value));
+      renderProfiles();
+      fillForm(c);
+      refreshLlmBadge();
+      log('已新增接口「' + c.name + '」：填好 API Key 后点「保存」即可；有多个接口时可随时切换。');
+    });
+    $('#btnDelLlm').addEventListener('click', () => {
+      const cur = LLM.active();
+      if (!confirm('删除接口「' + (cur.name || '未命名') + '」？\n该配置（含 API Key）会从本机浏览器一并删除，不可恢复。')) return;
+      const r = LLM.remove(cur.id);
+      if (!r.ok) { log(r.reason, 'err'); return; }
+      renderProfiles();
+      fillForm(r.active);
+      refreshLlmBadge();
+      log('已删除该接口配置。');
+    });
     $('#btnSaveLlm').addEventListener('click', () => {
-      LLM.save({
-        baseUrl: $('#cfgBaseUrl').value.trim(),
-        apiKey: $('#cfgApiKey').value.trim(),
-        model: $('#cfgModel').value.trim(),
-        temperature: Number($('#cfgTemp').value) || 0.4,
-        timeoutMs: Number($('#cfgTimeout').value) || 180000,
-        jsonMode: $('#cfgJsonMode').checked
-      });
+      LLM.save(formValues());
+      renderProfiles();
+      fillForm(LLM.active());
       refreshLlmBadge();
       log('LLM 配置已保存（仅存于本机浏览器）。');
     });
+
     $('#btnTestLlm').addEventListener('click', async () => {
-      $('#btnTestLlm').disabled = true;
+      const btn = $('#btnTestLlm');
+      btn.disabled = true;
+      const v = formValues();
+      // 先把自己正在请求的地址显示出来：失败时第一眼就知道测的是哪个 URL
+      $('#llmTestOut').innerHTML = '正在请求 <code>' + esc(LLM.endpointOf(v)) + '</code>'
+        + '（模型 ' + esc(v.model || '未填') + '）…';
       log('正在测试 LLM 连接…', 'busy');
       try {
-        const r = await LLM.test();
+        const r = await LLM.test(v);
         $('#llmState').className = 'badge ok';
         $('#llmState').textContent = '连接正常';
         $('#llmTestOut').innerHTML = `连接成功：模型 <b>${esc(r.model)}</b>，往返 ${r.ms}ms，返回「${esc(r.reply)}」。`;
@@ -1122,15 +1175,17 @@
       } catch (err) {
         $('#llmState').className = 'badge err';
         $('#llmState').textContent = '连接失败';
-        $('#llmTestOut').innerHTML = `<span style="color:#b91c1c">${esc(err.message)}</span>`;
-        log('LLM 连接测试失败：' + err.message, 'err');
+        // 多行诊断要保留换行，否则 CORS / 超时的排查提示会被挤成一坨
+        $('#llmTestOut').innerHTML =
+          '<span style="color:#b91c1c;white-space:pre-wrap">' + esc(err.message) + '</span>';
+        log('LLM 连接测试失败：' + String(err.message).split('\n')[0], 'err');
       } finally {
-        $('#btnTestLlm').disabled = false;
+        btn.disabled = false;
       }
     });
     $('#btnListModels').addEventListener('click', async () => {
       try {
-        const models = await LLM.listModels();
+        const models = await LLM.listModels(formValues());
         $('#modelList').innerHTML = models.map(m => `<option value="${esc(m)}"></option>`).join('');
         log(`已拉取 ${models.length} 个可用模型，可在「模型」输入框中下拉选择。`);
       } catch (err) { fail(err); }
@@ -1417,6 +1472,26 @@
     }));
 
     $('#authRetry').addEventListener('click', () => { Auth.init().catch(e => authErr('authErrorMsg', e.message)); });
+
+    /**
+     * 清除本机登录状态后重试。
+     * 只清 Supabase 的会话键（sb-<ref>-auth-token / supabase.auth.*）——
+     * **不动** sm.* 里的 LLM 配置与草稿，避免为了排一个登录问题把用户配置也清掉。
+     * 能解决的情况：残留的过期/损坏会话让本地状态与密码不同步。
+     */
+    $('#authClearLocal').addEventListener('click', () => {
+      let n = 0;
+      try {
+        Object.keys(localStorage).forEach(k => {
+          if (/^sb-.*-auth-token/.test(k) || /^supabase\./.test(k)) { localStorage.removeItem(k); n++; }
+        });
+        Object.keys(sessionStorage).forEach(k => {
+          if (/^sb-.*-auth-token/.test(k) || /^supabase\./.test(k)) { sessionStorage.removeItem(k); n++; }
+        });
+      } catch (e) { /* 存储不可用则忽略 */ }
+      log('已清除本机登录状态（' + n + ' 项），正在重新加载…');
+      location.reload();
+    });
     $('#authLocalMode').addEventListener('click', () => {
       authLocalOptOut = true;
       showAuthGate(false);
