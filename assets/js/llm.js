@@ -277,10 +277,17 @@ window.LLM = (function () {
       ];
       if (reachable) {
         lines.push('诊断：域名可达，但请求被**浏览器跨域策略（CORS）**拦下——该网关未开放浏览器直连。');
-        lines.push('解决：换用支持浏览器直连的服务，或在本机/服务器架反向代理后指向它。');
       } else if (!aborted) {
-        lines.push('诊断：连域名都没连上，通常是 Base URL 写错（多写/少写 /v1）、域名解析失败，或本机网络策略拦截。');
+        // 浏览器侧分不清"域名不可达"和"网关直接拒绝跨域请求"，别硬下结论——实测踩过：
+        // 某个网关 Node 侧 HTTP 200 正常，但网页里 23ms 就失败，两者表现完全一样。
+        lines.push('诊断：浏览器侧无法到达。常见原因有两个，**在网页里无法区分**：');
+        lines.push('  ① 该网关不允许浏览器直连（CORS）——不少网关都这样（含 OpenAI 官方）；');
+        lines.push('  ② Base URL 写错（多写/少写 /v1）或网络不通。');
       }
+      lines.push('快速分辨（Node 侧不受跨域限制）：在项目目录执行');
+      lines.push('  node tools/llm_check.mjs ' + (c.baseUrl || '<BaseURL>') + ' <APIKey> ' + (c.model || '<模型>'));
+      lines.push('· 该命令能通 → 接口没问题，是跨域被拦：需要加一层转发（见 README「AI 接口设置」）；');
+      lines.push('· 该命令也不通 → 是地址 / 密钥 / 模型名的问题。');
       throw new Error(lines.join('\n'));
     }
 
